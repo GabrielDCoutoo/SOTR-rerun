@@ -7,8 +7,8 @@ CFLAGS += -g
 
 # Sources and target
 TARGET = rtsounds
-OBJECTS = rtsounds.o fft/fft.o
-
+OBJECTS = rtsounds.o fft/fft.o 
+LOG= rtsounds_log.txt
 # Compiler
 CC = gcc
 
@@ -25,9 +25,10 @@ $(TARGET): $(OBJECTS)
 
 # Clean up build files
 clean:
-	rm -f $(OBJECTS) $(TARGET)
+	rm -f $(OBJECTS) $(TARGET) $(LOG)
 
 # Run target
 run: $(TARGET)
 	clear
-	./$(TARGET)
+	
+	sudo ./rtsounds -prio 80 10 40 60 50 30 20

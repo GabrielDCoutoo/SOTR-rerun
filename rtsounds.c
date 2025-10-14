@@ -332,21 +332,38 @@ void* Direction_thread(void* arg) {
     int prio = ((struct sched_param*)arg)->sched_priority;
     printf("Direction Thread Running - Prio: %d\n", prio);
 
-    // EMA state and thresholds (tunable)
-    float emaSpeed = 0.0f, emaAmp = 0.0f;
-    float prevEmaSpeed = 0.0f, prevEmaAmp = 0.0f;
-    const float alpha = 0.30f;          // EMA smoothing factor
-    const float freq_thresh = 5.0f;     // Hz threshold (use larger than FFT bin)
-    const float amp_thresh = 1000.0f;   // amplitude threshold
+    // State tracking
+    float prevRawSpeed = 0.0f;
+    float prevRawAmp = 0.0f;
+    
+    // Tunable thresholds
+    const float freq_large_change = 50.0f;     // Large change: respond immediately
+    const float freq_small_change = 15.0f;     // Small change: wait for trend
+    const float min_speed_running = 15.0f;     // Below this, consider stopped
+    const float stability_threshold = 10.0f;   // Speed variation to consider "stable"
+    
+    // History buffer for trend detection (last 3 readings)
+    #define HISTORY_SIZE 3
+    float speed_history[HISTORY_SIZE] = {0};
+    int history_idx = 0;
+    int history_count = 0;
 
-    // Initialize EMA from RTDB once
+    // Debouncing mechanism: confidence counter
+    int candidate_direction = 0;      // Proposed new direction
+    int confidence_counter = 0;       // How many cycles candidate has been consistent
+    const int confidence_required = 2; // Cycles needed to confirm direction change
+    
+    // Stability detection
+    int stable_cycles = 0;            // How many cycles at roughly same speed
+    const int stable_threshold_cycles = 3; // Cycles to consider motor "stable"
+
+    // Initialize from RTDB
     pthread_mutex_lock(&updatedVarMutex);
-    emaSpeed = prevEmaSpeed = detectedSpeedFrequency;
-    emaAmp = prevEmaAmp = maxAmplitudeDetected;
+    prevRawSpeed = detectedSpeedFrequency;
+    prevRawAmp = maxAmplitudeDetected;
     pthread_mutex_unlock(&updatedVarMutex);
 
     while (1) {
-        // 2. Definir o próximo tempo de despertar (periodicidade RT)
         next_wakeup = TsAdd(next_wakeup, period);
 
         // Read current raw values from RTDB
@@ -358,46 +375,115 @@ void* Direction_thread(void* arg) {
         currentMaxAmp = maxAmplitudeDetected;
         pthread_mutex_unlock(&updatedVarMutex);
 
-        // Update EMA
-        emaSpeed = alpha * currentSpeedFreq + (1.0f - alpha) * emaSpeed;
-        emaAmp   = alpha * currentMaxAmp   + (1.0f - alpha) * emaAmp;
+        // Add to history
+        speed_history[history_idx] = currentSpeedFreq;
+        history_idx = (history_idx + 1) % HISTORY_SIZE;
+        if (history_count < HISTORY_SIZE) history_count++;
 
-        // Compute deltas
-        float dSpeed = emaSpeed - prevEmaSpeed;
-        float dAmp   = emaAmp - prevEmaAmp;
+        // Compute raw deltas
+        float dSpeed = currentSpeedFreq - prevRawSpeed;
+        float dAmp = currentMaxAmp - prevRawAmp;
 
-        // 5. LÓGICA DE DETEÇÃO DE DIREÇÃO (based on EMA trends)
-        int newDirection = directionValue; // start from previous global
-
-        if (emaSpeed > 1.0f) { // motor roughly running (avoid tiny noise)
-            if (dSpeed > freq_thresh && dAmp > amp_thresh) {
-                newDirection = 1;  // FORWARD (accelerating)
-            } else if (dSpeed < -freq_thresh && dAmp < -amp_thresh) {
-                newDirection = -1; // REVERSE (decelerating)
-            } else {
-                // small changes -> keep previous direction
-                newDirection = directionValue;
-            }
+        // Check if motor is running at stable speed
+        if (fabs(dSpeed) < stability_threshold) {
+            stable_cycles++;
         } else {
-            // Motor stopped or very low speed
-            newDirection = 0;
+            stable_cycles = 0; // Reset if speed changes significantly
         }
 
-        // Update RTDB with smoothed values and direction
+        // Determine PROPOSED direction based on immediate changes and trends
+        int proposedDirection = directionValue; // default: keep current
+
+        if (currentSpeedFreq < min_speed_running) {
+            // Motor stopped or very low speed - always immediate
+            proposedDirection = 0;
+        } else {
+            // Check for large immediate changes (respond with priority)
+            if (fabs(dSpeed) > freq_large_change) {
+                if (dSpeed > 0) {
+                    proposedDirection = 1;  // FORWARD (large acceleration)
+                } else {
+                    proposedDirection = -1; // REVERSE (large deceleration)
+                }
+            } 
+            // For smaller changes, use trend analysis if we have enough history
+            else if (history_count >= 2) {
+                // Compute trend from last 2-3 samples
+                float trend = 0.0f;
+                int samples_to_check = (history_count >= HISTORY_SIZE) ? HISTORY_SIZE - 1 : history_count - 1;
+                
+                for (int i = 0; i < samples_to_check; i++) {
+                    int curr_idx = (history_idx - 1 - i + HISTORY_SIZE) % HISTORY_SIZE;
+                    int prev_idx = (history_idx - 2 - i + HISTORY_SIZE) % HISTORY_SIZE;
+                    trend += (speed_history[curr_idx] - speed_history[prev_idx]);
+                }
+                trend /= samples_to_check; // average trend
+
+                // Decision based on trend (only if motor is NOT stable)
+                if (stable_cycles < stable_threshold_cycles && fabs(trend) > freq_small_change) {
+                    if (trend > 0) {
+                        proposedDirection = 1;  // FORWARD (positive trend)
+                    } else {
+                        proposedDirection = -1; // REVERSE (negative trend)
+                    }
+                }
+                // else: motor is stable or no significant trend, keep previous direction
+            }
+            // If we don't have enough history yet, respond to any detectable change
+            else if (fabs(dSpeed) > freq_small_change) {
+                if (dSpeed > 0) {
+                    proposedDirection = 1;
+                } else {
+                    proposedDirection = -1;
+                }
+            }
+        }
+
+        // Apply debouncing logic for direction changes
+        int actualDirection = directionValue; // Start with current direction
+        
+        // Immediate update conditions (no debouncing needed)
+        if (proposedDirection == 0 ||                          // Always stop immediately
+            fabs(dSpeed) > freq_large_change ||                // Large changes immediate
+            proposedDirection == directionValue) {             // No change proposed
+            
+            actualDirection = proposedDirection;
+            candidate_direction = proposedDirection;
+            confidence_counter = 0; // Reset counter
+            
+        } else {
+            // Debouncing for direction reversals
+            if (proposedDirection == candidate_direction) {
+                // Same candidate as before, increase confidence
+                confidence_counter++;
+                
+                if (confidence_counter >= confidence_required) {
+                    // Confirmed! Change direction
+                    actualDirection = proposedDirection;
+                    confidence_counter = 0; // Reset for next change
+                }
+            } else {
+                // New candidate direction, reset counter
+                candidate_direction = proposedDirection;
+                confidence_counter = 1;
+            }
+        }
+
+        // Update RTDB
         pthread_mutex_lock(&updatedVarMutex);
-        directionValue = newDirection;
-        directionValues.lastFrequency = emaSpeed;
-        directionValues.lastAmplitude = emaAmp;
+        directionValue = actualDirection;
+        directionValues.lastFrequency = currentSpeedFreq;
+        directionValues.lastAmplitude = currentMaxAmp;
         pthread_mutex_unlock(&updatedVarMutex);
 
-        // Prepare for next cycle
-        prevEmaSpeed = emaSpeed;
-        prevEmaAmp = emaAmp;
+        // Update state for next iteration
+        prevRawSpeed = currentSpeedFreq;
+        prevRawAmp = currentMaxAmp;
 
-        printf("DEBUG DIRECTION (Prio %d): EMA Freq=%.2f (d=%.2f), EMA Amp=%.2f (d=%.2f), Dir=%d\n",
-               prio, emaSpeed, dSpeed, emaAmp, dAmp, newDirection);
+        printf("DEBUG DIRECTION (Prio %d): Freq=%.2f (Δ=%.2f), Dir=%d [Prop=%d, Conf=%d/%d, Stable=%d]\n",
+               prio, currentSpeedFreq, dSpeed, actualDirection, 
+               proposedDirection, confidence_counter, confidence_required, stable_cycles);
 
-        // 7. Espera Periódica (Tempo Real Absoluto)
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL);
     }
     return NULL;
