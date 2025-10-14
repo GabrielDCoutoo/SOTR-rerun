@@ -324,12 +324,6 @@ void* Issue_thread(void* arg) {
 void* Direction_thread(void* arg) {
     const int N = ABUFSIZE_SAMPLES; 
     
-    // Variáveis locais para FFT (declaradas, mas não utilizadas nesta lógica simplificada de RTDB)
-    // São mantidas aqui apenas para consistência, se decidir implementar a FFT nesta thread mais tarde.
-    complex double x[N]; 
-    float fk[N];
-    float Ak[N];
-    
     // 1. Definir o período (500 ms)
     struct timespec period = {0, 500000000}; 
     struct timespec next_wakeup;
@@ -338,58 +332,73 @@ void* Direction_thread(void* arg) {
     int prio = ((struct sched_param*)arg)->sched_priority;
     printf("Direction Thread Running - Prio: %d\n", prio);
 
+    // EMA state and thresholds (tunable)
+    float emaSpeed = 0.0f, emaAmp = 0.0f;
+    float prevEmaSpeed = 0.0f, prevEmaAmp = 0.0f;
+    const float alpha = 0.30f;          // EMA smoothing factor
+    const float freq_thresh = 5.0f;     // Hz threshold (use larger than FFT bin)
+    const float amp_thresh = 1000.0f;   // amplitude threshold
+
+    // Initialize EMA from RTDB once
+    pthread_mutex_lock(&updatedVarMutex);
+    emaSpeed = prevEmaSpeed = detectedSpeedFrequency;
+    emaAmp = prevEmaAmp = maxAmplitudeDetected;
+    pthread_mutex_unlock(&updatedVarMutex);
+
     while (1) {
         // 2. Definir o próximo tempo de despertar (periodicidade RT)
         next_wakeup = TsAdd(next_wakeup, period);
-        
-        // 3. Obter o buffer de leitura do CAB (Não usado, pois lê do RTDB)
-        
-        // 4. LER RTDB (Pico de Velocidade do ciclo anterior)
-        float currentSpeedFreq = 0.0;
-        float currentMaxAmp = 0.0;
-        float lastFreq = 0.0;
-        float lastAmp = 0.0;
-        
-        // CORREÇÃO APLICADA AQUI: pthread_mutex_unlock
+
+        // Read current raw values from RTDB
+        float currentSpeedFreq = 0.0f;
+        float currentMaxAmp = 0.0f;
+
         pthread_mutex_lock(&updatedVarMutex);
         currentSpeedFreq = detectedSpeedFrequency;
         currentMaxAmp = maxAmplitudeDetected;
-        lastFreq = directionValues.lastFrequency;
-        lastAmp = directionValues.lastAmplitude;
-        pthread_mutex_unlock(&updatedVarMutex); // <-- CORRETO
+        pthread_mutex_unlock(&updatedVarMutex);
 
-        
-        // 5. LÓGICA DE DETEÇÃO DE DIREÇÃO
-        int newDirection = directionValue; // Começa com o valor global anterior
+        // Update EMA
+        emaSpeed = alpha * currentSpeedFreq + (1.0f - alpha) * emaSpeed;
+        emaAmp   = alpha * currentMaxAmp   + (1.0f - alpha) * emaAmp;
 
-        if (currentSpeedFreq > 0.5) { // Se o motor estiver a rodar (> 0.5 Hz)
-            if (currentSpeedFreq > lastFreq && currentMaxAmp > lastAmp) {
-                // Aceleração = FORWARD
-                newDirection = 1;
-            } else if (currentSpeedFreq < lastFreq && currentMaxAmp < lastAmp) {
-                // Desaceleração = REVERSE
-                newDirection = -1; 
-            } else if (fabs(currentSpeedFreq - lastFreq) < 0.5 && fabs(currentMaxAmp - lastAmp) < 500) {
-                 // Estável (mantém a direção anterior, a menos que esteja parado)
-                newDirection = directionValue; 
+        // Compute deltas
+        float dSpeed = emaSpeed - prevEmaSpeed;
+        float dAmp   = emaAmp - prevEmaAmp;
+
+        // 5. LÓGICA DE DETEÇÃO DE DIREÇÃO (based on EMA trends)
+        int newDirection = directionValue; // start from previous global
+
+        if (emaSpeed > 1.0f) { // motor roughly running (avoid tiny noise)
+            if (dSpeed > freq_thresh && dAmp > amp_thresh) {
+                newDirection = 1;  // FORWARD (accelerating)
+            } else if (dSpeed < -freq_thresh && dAmp < -amp_thresh) {
+                newDirection = -1; // REVERSE (decelerating)
+            } else {
+                // small changes -> keep previous direction
+                newDirection = directionValue;
             }
         } else {
-            // Motor Parado
+            // Motor stopped or very low speed
             newDirection = 0;
         }
 
-        // 6. Atualizar o RTDB
-        // CORREÇÃO APLICADA AQUI: pthread_mutex_unlock
+        // Update RTDB with smoothed values and direction
         pthread_mutex_lock(&updatedVarMutex);
-        directionValue = newDirection; // Atualiza a variável display
-        directionValues.lastFrequency = currentSpeedFreq; // Guarda o estado atual
-        directionValues.lastAmplitude = currentMaxAmp;
-        pthread_mutex_unlock(&updatedVarMutex); // <-- CORRETO
-        
-        printf("DEBUG DIRECTION (Prio %d): Curr Freq=%.2f, Last Freq=%.2f, Dir=%d\n", prio, currentSpeedFreq, lastFreq, newDirection);
-        
+        directionValue = newDirection;
+        directionValues.lastFrequency = emaSpeed;
+        directionValues.lastAmplitude = emaAmp;
+        pthread_mutex_unlock(&updatedVarMutex);
+
+        // Prepare for next cycle
+        prevEmaSpeed = emaSpeed;
+        prevEmaAmp = emaAmp;
+
+        printf("DEBUG DIRECTION (Prio %d): EMA Freq=%.2f (d=%.2f), EMA Amp=%.2f (d=%.2f), Dir=%d\n",
+               prio, emaSpeed, dSpeed, emaAmp, dAmp, newDirection);
+
         // 7. Espera Periódica (Tempo Real Absoluto)
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL); 
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL);
     }
     return NULL;
 }
