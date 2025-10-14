@@ -1,7 +1,7 @@
 #define _GNU_SOURCE /* Must precede #include <sched.h> for sched_setaffinity */ 
 #define __USE_MISC
 #define ABUFSIZE_SAMPLES 4096
-#define NTASKS 6
+#define NTASKS 7
 #include "rtsounds.h"
 #include <math.h>
 #include <complex.h>
@@ -96,10 +96,7 @@ void* Speed_thread(void* arg) {
     while (1) {
         // 2. Definir o próximo tempo de despertar (antes de esperar pelos dados)
         next_wakeup = TsAdd(next_wakeup, period);
-        
-        printf("DEBUG SPEED: A Esperar por dados (sem_wait)...\n"); 
-        sem_wait(&data_ready);
-        
+
         printf("DEBUG SPEED: Dados recebidos! A processar...\n"); 
         
         buffer* readBuffer = cab_getReadBuffer(&cab_buffer); 
@@ -149,17 +146,19 @@ void* Speed_thread(void* arg) {
 // rtsounds.c
 
 void* Display_thread(void* arg) {
-    // ******************************************************
-    // CORREÇÃO: Variáveis locais do ciclo de Tempo Real (RT)
-    // ******************************************************
     struct timespec period = {0, 250000000}; // 250 ms
     struct timespec next_wakeup;
     clock_gettime(CLOCK_MONOTONIC, &next_wakeup); 
 
     int prio = ((struct sched_param*)arg)->sched_priority;
-    // ******************************************************
-
     printf("Display Thread Running - Prio: %d\n", prio);
+
+    // Open log file for appending
+    FILE *logf = fopen("rtsounds_log.txt", "a");
+    if (!logf) {
+        perror("Failed to open log file");
+        logf = NULL;
+    }
 
     while (1) {
         // 2. Calcular o próximo tempo de despertar
@@ -204,9 +203,27 @@ void* Display_thread(void* arg) {
         printf(" Issue Thread Ratio: \t\t%.2f\n", issueR); 
         printf("===========================================\n");
 
+        // Also write to log file
+        if (logf) {
+            fprintf(logf, "===========================================\n");
+            fprintf(logf, " REAL-TIME MONITORING SYSTEM (Prio %d)\n", prio);
+            fprintf(logf, "===========================================\n");
+            fprintf(logf, " [TASK STATUS]\n");
+            fprintf(logf, " SPEED (Prio 40): \t%.2f Hz\n", speedFreq);
+            fprintf(logf, " ISSUE (Prio 60): \t%s\n", issueStatus);
+            fprintf(logf, " DIRECTION (Prio 50): \t%s\n", dirStatus);
+            fprintf(logf, "===========================================\n");
+            fprintf(logf, " [DEBUG]\n");
+            fprintf(logf, " Speed Thread Max Amplitude: \t%.2f\n", maxAmp);
+            fprintf(logf, " Issue Thread Ratio: \t\t%.2f\n", issueR); 
+            fprintf(logf, "===========================================\n");
+            fflush(logf);
+        }
+
         // 5. Espera Periódica (RT)
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL); 
     }
+    // fclose(logf); // unreachable, but good practice if you ever break the loop
     return NULL;
 }
 // rtsounds.c
@@ -352,7 +369,7 @@ void* Direction_thread(void* arg) {
             } else if (currentSpeedFreq < lastFreq && currentMaxAmp < lastAmp) {
                 // Desaceleração = REVERSE
                 newDirection = -1; 
-            } else if (abs(currentSpeedFreq - lastFreq) < 0.5 && abs(currentMaxAmp - lastAmp) < 500) {
+            } else if (fabs(currentSpeedFreq - lastFreq) < 0.5 && fabs(currentMaxAmp - lastAmp) < 500) {
                  // Estável (mantém a direção anterior, a menos que esteja parado)
                 newDirection = directionValue; 
             }
@@ -378,10 +395,124 @@ void* Direction_thread(void* arg) {
 }
 // **************** Lógica da Thread 6: FFT (ou 6ª Thread) ****************
 void* FFT_thread(void* arg) {
+    // Declare arrays for FFT processing
+    const int N = ABUFSIZE_SAMPLES;  // 4096 samples
+    complex double x[N];              // Input samples as complex numbers
+    float fk[N];                      // Frequency bins (Hz)
+    float Ak[N];                      // Amplitude at each frequency
+    
+    // Set period to 2 seconds (low priority, just for monitoring/logging)
+    struct timespec period = {2, 0}; 
+    struct timespec next_wakeup;
+    clock_gettime(CLOCK_MONOTONIC, &next_wakeup);
+
     int prio = ((struct sched_param*)arg)->sched_priority;
-    printf("FFT Thread Running - Prio: %d\n", prio);
-    // TODO: Implementar periodicidade
-    while(1) { SDL_Delay(250); } // Placeholder
+    printf("FFT Spectral Analysis Thread Running - Prio: %d\n", prio);
+
+    // Open log file for appending
+    FILE *logf = fopen("rtsounds_log.txt", "a");
+    if (!logf) {
+        perror("Failed to open log file");
+        logf = NULL;
+    }
+
+    while (1) {
+        // Calculate next wakeup time
+        next_wakeup = TsAdd(next_wakeup, period);
+        
+        // Get the latest buffer from CAB
+        buffer* readBuffer = cab_getReadBuffer(&cab_buffer);
+        
+        if (readBuffer != NULL) {
+            printf("DEBUG FFT: Processing buffer %d for spectral analysis\n", readBuffer->index);
+
+            for (int k = 0; k < N; k++) {
+                double centered_sample = (double)readBuffer->buf[k] - 32768.0;
+                x[k] = centered_sample + 0.0 * I;
+            }
+            cab_releaseReadBuffer(&cab_buffer, readBuffer->index);
+
+            fftCompute(x, N);
+            fftGetAmplitude(x, N, SAMP_FREQ, fk, Ak);
+
+            printf("\n╔═══════════════════════════════════════════╗\n");
+            printf("║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║\n");
+            printf("╠═══════════════════════════════════════════╣\n");
+
+            if (logf) {
+                fprintf(logf, "\n╔═══════════════════════════════════════════╗\n");
+                fprintf(logf, "║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║\n");
+                fprintf(logf, "╠═══════════════════════════════════════════╣\n");
+            }
+
+            float Ak_copy[N/2 + 1];
+            for (int k = 0; k <= N/2; k++) Ak_copy[k] = Ak[k];
+
+            int peaks_found = 0;
+            for (int p = 0; p < 5; p++) {
+                float maxA = 0.0;
+                int maxIdx = 0;
+                for (int k = 1; k <= N/2; k++) {
+                    if (Ak_copy[k] > maxA) {
+                        maxA = Ak_copy[k];
+                        maxIdx = k;
+                    }
+                }
+                if (maxA > 100.0) {
+                    printf("║ Peak %d: %7.1f Hz  │  Amp: %10.1f    ║\n", p + 1, fk[maxIdx], maxA);
+                    if (logf) fprintf(logf, "║ Peak %d: %7.1f Hz  │  Amp: %10.1f    ║\n", p + 1, fk[maxIdx], maxA);
+                    peaks_found++;
+                }
+                Ak_copy[maxIdx] = 0.0;
+            }
+            if (peaks_found == 0) {
+                printf("║ No significant peaks detected (all < 100) ║\n");
+                if (logf) fprintf(logf, "║ No significant peaks detected (all < 100) ║\n");
+            }
+            printf("╚═══════════════════════════════════════════╝\n\n");
+            if (logf) {
+                fprintf(logf, "╚═══════════════════════════════════════════╝\n\n");
+                fflush(logf);
+            }
+        } else {
+            printf("DEBUG FFT: No buffer available for spectral analysis\n");
+            if (logf) {
+                fprintf(logf, "DEBUG FFT: No buffer available for spectral analysis\n");
+                fflush(logf);
+            }
+        }
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL);
+    }
+    // fclose(logf); // unreachable, but good practice if you ever break the loop
+    return NULL;
+}
+
+// Add Preprocessing thread function
+void* Preprocessing_thread(void* arg) {
+    struct timespec period = {0, 150000000}; // 150 ms
+    struct timespec next_wakeup;
+    clock_gettime(CLOCK_MONOTONIC, &next_wakeup);
+
+    int prio = ((struct sched_param*)arg)->sched_priority;
+    printf("Preprocessing Thread (LP Filter) Running - Prio: %d\n", prio);
+
+    while (1) {
+        next_wakeup = TsAdd(next_wakeup, period);
+
+        buffer* readBuffer = cab_getReadBuffer(&cab_buffer);
+        if (readBuffer != NULL) {
+            printf("DEBUG PREPROCESSING: Applying LP filter to buffer %d\n", readBuffer->index);
+            filterLP(COF, SAMP_FREQ, (uint8_t*)readBuffer->buf, ABUFSIZE_SAMPLES);
+
+            cab_releaseReadBuffer(&cab_buffer, readBuffer->index);
+
+            printf("DEBUG PREPROCESSING: LP filter applied and buffer released\n");
+        } else {
+            printf("DEBUG PREPROCESSING: No buffer available\n");
+        }
+
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL);
+    }
     return NULL;
 }
 
@@ -424,14 +555,14 @@ int initialize_sdl_audio(int index) {
 
     return 0;
 }
-pthread_t thread1, thread2, thread3, thread4, thread5, thread6;
-struct sched_param parm1, parm2, parm3, parm4, parm5, parm6;
-pthread_attr_t attr1, attr2, attr3, attr4, attr5, attr6;
+pthread_t thread1, thread2, thread3, thread4, thread5, thread6, thread7;
+struct sched_param parm1, parm2, parm3, parm4, parm5, parm6, parm7;
+pthread_attr_t attr1, attr2, attr3, attr4, attr5, attr6, attr7;
 
-int priorities[6];
+int priorities[7];
 
 void usage() {
-    printf("Usage: ./rtsounds -prio [p1 p2 p3 p4 p5 p6]\n");
+    printf("Usage: ./rtsounds -prio [p1 p2 p3 p4 p5 p6 p7]\n");
 }
 
 void cleanup() {
@@ -451,19 +582,20 @@ int main(int argc, char *argv[]) {
     // General vars
     int err;
     struct sched_param parm1 = {0}, parm2 = {0}, parm3 = {0}, 
-                       parm4 = {0}, parm5 = {0}, parm6 = {0};
+                       parm4 = {0}, parm5 = {0}, parm6 = {0}, parm7 = {0};
     
     unsigned char* procname1 = "AudioThread";
-    unsigned char* procname2 = "SpeedThread";
-    unsigned char* procname3 = "IssueThread";
-    unsigned char* procname4 = "DirectionThread";
-    unsigned char* procname5 = "DisplayThread";
-    unsigned char* procname6 = "FFTThread";
+    unsigned char* procname2 = "PreprocessingThread";
+    unsigned char* procname3 = "SpeedThread";
+    unsigned char* procname4 = "IssueThread";
+    unsigned char* procname5 = "DirectionThread";
+    unsigned char* procname6 = "DisplayThread";
+    unsigned char* procname7 = "FFTThread";
     
     // Parse priorities from command line
     if (argc > 1) {
-        if (strcmp(argv[1], "-prio") == 0 && argc == 8) {
-            for(int i = 0; i < 6; i++) {
+        if (strcmp(argv[1], "-prio") == 0 && argc == 9) {
+            for(int i = 0; i < 7; i++) {
                 priorities[i] = atoi(argv[i+2]);
             }
         } else {
@@ -516,6 +648,9 @@ int main(int argc, char *argv[]) {
         printf("Buffer %d: nusers=%d\n", i, cab_buffer.buflist[i].nusers);
     }
 
+    // Add semaphore initialization here
+    sem_init(&data_ready, 0, 0);
+
     // Set up signal handlers
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
@@ -532,66 +667,76 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Error creating Audio thread\n");
         return 1;
     }
-// Thread 2: Speed
+
+    // Thread 2: Preprocessing (LP Filter)
     pthread_attr_init(&attr2);
     pthread_attr_setinheritsched(&attr2, PTHREAD_EXPLICIT_SCHED);
     pthread_attr_setschedpolicy(&attr2, SCHED_FIFO);
     parm2.sched_priority = priorities[1];
     pthread_attr_setschedparam(&attr2, &parm2);
-    // CORREÇÃO: Mudar &procname2 para &parm2
-    err = pthread_create(&thread2, &attr2, Speed_thread, &parm2); 
+    err = pthread_create(&thread2, &attr2, Preprocessing_thread, &parm2);
+    if (err != 0) {
+        fprintf(stderr, "Error creating Preprocessing thread\n");
+        return 1;
+    }
+
+    // Thread 3: Speed
+    pthread_attr_init(&attr3);
+    pthread_attr_setinheritsched(&attr3, PTHREAD_EXPLICIT_SCHED);
+    pthread_attr_setschedpolicy(&attr3, SCHED_FIFO);
+    parm3.sched_priority = priorities[2];
+    pthread_attr_setschedparam(&attr3, &parm3);
+    err = pthread_create(&thread3, &attr3, Speed_thread, &parm3); 
     if (err != 0) {
         printf("\n\r Error creating Thread [%s]", strerror(err));
         return 1;
     }
 
-    // Criação da thread3 (Issue_thread)
-    // Criação da thread3 (Issue_thread - priorities[2])
-    pthread_attr_init(&attr3);
-    pthread_attr_setinheritsched(&attr3, PTHREAD_EXPLICIT_SCHED);
-    pthread_attr_setschedpolicy(&attr3, SCHED_FIFO);
-    parm3.sched_priority = priorities[2]; // Índice 2 (Prio 60, mais alta)
-    pthread_attr_setschedparam(&attr3, &parm3);
-    err = pthread_create(&thread3, &attr3, Issue_thread, &parm3); 
-    if (err != 0) {
-        printf("\n\r Error creating Thread 3 (Issue) [%s]", strerror(err));
-        return 1;
-    }
-
-    // Criação da thread4 (Direction_thread - priorities[3])
+    // Thread 4: Issue
     pthread_attr_init(&attr4);
     pthread_attr_setinheritsched(&attr4, PTHREAD_EXPLICIT_SCHED);
     pthread_attr_setschedpolicy(&attr4, SCHED_FIFO);
-    parm4.sched_priority = priorities[3]; // Índice 3 (Prio 50)
+    parm4.sched_priority = priorities[3];
     pthread_attr_setschedparam(&attr4, &parm4);
-    err = pthread_create(&thread4, &attr4, Direction_thread, &parm4); 
+    err = pthread_create(&thread4, &attr4, Issue_thread, &parm4); 
     if (err != 0) {
-        printf("\n\r Error creating Thread 4 (Direction) [%s]", strerror(err));
+        printf("\n\r Error creating Thread 4 (Issue) [%s]", strerror(err));
         return 1;
     }
 
-    // ... Antes da criação da thread5 (Display_thread) ...
-    // Continue similarly for thread3, thread4, thread5, thread6
+    // Thread 5: Direction
     pthread_attr_init(&attr5);
     pthread_attr_setinheritsched(&attr5, PTHREAD_EXPLICIT_SCHED);
     pthread_attr_setschedpolicy(&attr5, SCHED_FIFO);
-    parm5.sched_priority = priorities[4]; // Índice 4 (Prio 30)
+    parm5.sched_priority = priorities[4];
     pthread_attr_setschedparam(&attr5, &parm5);
-    err = pthread_create(&thread5, &attr5, Display_thread, &parm5); // Usar &parm5 para passar a prioridade
+    err = pthread_create(&thread5, &attr5, Direction_thread, &parm5); 
     if (err != 0) {
-        printf("\n\r Error creating Thread 5 [%s]", strerror(err));
+        printf("\n\r Error creating Thread 5 (Direction) [%s]", strerror(err));
         return 1;
     }
 
-    // Criação da thread6 (FFT_thread - priorities[5])
+    // Thread 6: Display
     pthread_attr_init(&attr6);
     pthread_attr_setinheritsched(&attr6, PTHREAD_EXPLICIT_SCHED);
     pthread_attr_setschedpolicy(&attr6, SCHED_FIFO);
-    parm6.sched_priority = priorities[5]; // Índice 5 (Prio 20, mais baixa)
+    parm6.sched_priority = priorities[5];
     pthread_attr_setschedparam(&attr6, &parm6);
-    err = pthread_create(&thread6, &attr6, FFT_thread, &parm6); // Assumindo FFT_thread
+    err = pthread_create(&thread6, &attr6, Display_thread, &parm6);
     if (err != 0) {
-        printf("\n\r Error creating Thread 6 (FFT) [%s]", strerror(err));
+        printf("\n\r Error creating Thread 6 (Display) [%s]", strerror(err));
+        return 1;
+    }
+
+    // Thread 7: FFT
+    pthread_attr_init(&attr7);
+    pthread_attr_setinheritsched(&attr7, PTHREAD_EXPLICIT_SCHED);
+    pthread_attr_setschedpolicy(&attr7, SCHED_FIFO);
+    parm7.sched_priority = priorities[6];
+    pthread_attr_setschedparam(&attr7, &parm7);
+    err = pthread_create(&thread7, &attr7, FFT_thread, &parm7);
+    if (err != 0) {
+        printf("\n\r Error creating Thread 7 (FFT) [%s]", strerror(err));
         return 1;
     }
 
@@ -746,3 +891,4 @@ void printSamplesU16(uint8_t *buffer, int nsamples) {
     }
     printf("\n");
 }
+

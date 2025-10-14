@@ -7,7 +7,7 @@
 #define NS_IN_SEC 1000000000L
 #define DEFAULT_PRIO 50            // Default (fixed) thread priority  
 #define BUF_SIZE 4096
-#define NTASKS 6
+#define NTASKS 7
 #define THREAD_INIT_OFFSET 1000000 // Initial offset (i.e. delay) of rt thread
 #define MONO 1                     /* Sample and play in mono (1 channel) */
 #define SAMP_FREQ 44100            /* Sampling frequency used by audio device */

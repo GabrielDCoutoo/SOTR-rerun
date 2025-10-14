@@ -1,0 +1,764 @@
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ No significant peaks detected (all < 100) ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	0.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STOP
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	0.00
+ Issue Thread Ratio: 		0.00
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	0.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STOP
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	0.00
+ Issue Thread Ratio: 		0.00
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	0.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STOP
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	0.00
+ Issue Thread Ratio: 		0.00
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	0.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STOP
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	0.00
+ Issue Thread Ratio: 		0.00
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	10.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STOP
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	3748.36
+ Issue Thread Ratio: 		0.00
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	549.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	3815.52
+ Issue Thread Ratio: 		0.04
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	32.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	11834.66
+ Issue Thread Ratio: 		0.04
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	10.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	29678.10
+ Issue Thread Ratio: 		0.04
+===========================================
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:    10.0 Hz  │  Amp:    11967.3    ║
+║ Peak 2:   462.0 Hz  │  Amp:     9203.0    ║
+║ Peak 3:   215.0 Hz  │  Amp:     8647.8    ║
+║ Peak 4:   430.0 Hz  │  Amp:     8295.5    ║
+║ Peak 5:   150.0 Hz  │  Amp:     8282.3    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	10.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	16357.22
+ Issue Thread Ratio: 		0.04
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	32.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	20536.48
+ Issue Thread Ratio: 		0.15
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	10.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	17666.72
+ Issue Thread Ratio: 		0.15
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	150.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	12960.52
+ Issue Thread Ratio: 		0.15
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	21.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	14437.26
+ Issue Thread Ratio: 		0.15
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	118.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	12828.45
+ Issue Thread Ratio: 		0.13
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	118.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	18371.48
+ Issue Thread Ratio: 		0.13
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	118.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	12028.98
+ Issue Thread Ratio: 		0.13
+===========================================
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ No significant peaks detected (all < 100) ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	0.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STOP
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	0.00
+ Issue Thread Ratio: 		0.00
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	0.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STOP
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	0.00
+ Issue Thread Ratio: 		0.00
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	0.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STOP
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	0.00
+ Issue Thread Ratio: 		0.00
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	10.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STOP
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	76.98
+ Issue Thread Ratio: 		0.00
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	570.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STOP
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	4845.44
+ Issue Thread Ratio: 		0.00
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	21.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	11663.07
+ Issue Thread Ratio: 		0.13
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	32.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	21266.94
+ Issue Thread Ratio: 		0.13
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	409.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	25902.06
+ Issue Thread Ratio: 		0.13
+===========================================
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:    43.0 Hz  │  Amp:    27787.5    ║
+║ Peak 2:    86.0 Hz  │  Amp:     8870.6    ║
+║ Peak 3:   118.0 Hz  │  Amp:     7975.3    ║
+║ Peak 4:    32.0 Hz  │  Amp:     7928.4    ║
+║ Peak 5:    21.0 Hz  │  Amp:     6442.4    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	118.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	16746.44
+ Issue Thread Ratio: 		0.13
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	43.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	18752.01
+ Issue Thread Ratio: 		0.04
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	32.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	34493.20
+ Issue Thread Ratio: 		0.04
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	32.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	24837.78
+ Issue Thread Ratio: 		0.04
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	43.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	25026.02
+ Issue Thread Ratio: 		0.04
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	21.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	19830.14
+ Issue Thread Ratio: 		0.04
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	269.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	20911.71
+ Issue Thread Ratio: 		0.04
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	290.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	24186.09
+ Issue Thread Ratio: 		0.04
+===========================================
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   409.0 Hz  │  Amp:    13520.6    ║
+║ Peak 2:   279.0 Hz  │  Amp:    11446.5    ║
+║ Peak 3:   269.0 Hz  │  Amp:     8581.5    ║
+║ Peak 4:   139.0 Hz  │  Amp:     8568.9    ║
+║ Peak 5:   129.0 Hz  │  Amp:     7816.2    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	441.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	14741.93
+ Issue Thread Ratio: 		0.04
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	559.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	13146.74
+ Issue Thread Ratio: 		0.41
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	645.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	13702.92
+ Issue Thread Ratio: 		0.41
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	635.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	13193.86
+ Issue Thread Ratio: 		0.41
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	21.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	11064.33
+ Issue Thread Ratio: 		0.41
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	602.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	11608.57
+ Issue Thread Ratio: 		0.07
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	452.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	11005.92
+ Issue Thread Ratio: 		0.07
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	21.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	20928.36
+ Issue Thread Ratio: 		0.07
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	21.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	27773.61
+ Issue Thread Ratio: 		0.07
+===========================================
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:    21.0 Hz  │  Amp:    19190.8    ║
+║ Peak 2:    96.0 Hz  │  Amp:    18139.1    ║
+║ Peak 3:    53.0 Hz  │  Amp:    12226.1    ║
+║ Peak 4:    86.0 Hz  │  Amp:     8438.5    ║
+║ Peak 5:   107.0 Hz  │  Amp:     8236.9    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	32.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	16018.65
+ Issue Thread Ratio: 		0.07
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	43.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	12858.03
+ Issue Thread Ratio: 		0.07
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	21.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	15646.89
+ Issue Thread Ratio: 		0.07
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	53.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	20371.71
+ Issue Thread Ratio: 		0.07
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	43.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	21866.36
+ Issue Thread Ratio: 		0.21
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	32.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	16352.35
+ Issue Thread Ratio: 		0.21
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	32.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	16892.23
+ Issue Thread Ratio: 		0.21
+===========================================
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   139.0 Hz  │  Amp:    12188.7    ║
+║ Peak 2:   290.0 Hz  │  Amp:     9726.0    ║
+║ Peak 3:    21.0 Hz  │  Amp:     9505.6    ║
+║ Peak 4:   409.0 Hz  │  Amp:     8662.0    ║
+║ Peak 5:   473.0 Hz  │  Amp:     7805.5    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	21.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	11769.26
+ Issue Thread Ratio: 		0.21
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	96.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	12153.59
+ Issue Thread Ratio: 		0.21
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	43.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	22776.99
+ Issue Thread Ratio: 		0.21
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	21.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	25912.53
+ Issue Thread Ratio: 		0.21
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	43.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	21924.95
+ Issue Thread Ratio: 		0.21
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	107.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	19543.60
+ Issue Thread Ratio: 		0.05
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	43.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	11184.41
+ Issue Thread Ratio: 		0.05
+===========================================
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	107.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	11539.32
+ Issue Thread Ratio: 		0.05
+===========================================
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   107.0 Hz  │  Amp:    13324.7    ║
+║ Peak 2:   430.0 Hz  │  Amp:    11429.3    ║
+║ Peak 3:   419.0 Hz  │  Amp:    11244.7    ║
+║ Peak 4:   538.0 Hz  │  Amp:     8930.9    ║
+║ Peak 5:   527.0 Hz  │  Amp:     7032.0    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	226.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	16455.38
+ Issue Thread Ratio: 		0.05
+===========================================
