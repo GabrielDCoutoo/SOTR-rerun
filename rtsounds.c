@@ -146,7 +146,7 @@ void* Speed_thread(void* arg) {
 // rtsounds.c
 
 void* Display_thread(void* arg) {
-    struct timespec period = {0, 250000000}; // 250 ms
+    struct timespec period = {3, 0}; // 5 ms
     struct timespec next_wakeup;
     clock_gettime(CLOCK_MONOTONIC, &next_wakeup); 
 
@@ -324,7 +324,7 @@ void* Issue_thread(void* arg) {
 void* Direction_thread(void* arg) {
     const int N = ABUFSIZE_SAMPLES; 
     
-    // 1. Definir o período (500 ms)
+    // 1. Define period (500 ms)
     struct timespec period = {0, 500000000}; 
     struct timespec next_wakeup;
     clock_gettime(CLOCK_MONOTONIC, &next_wakeup); 
@@ -332,157 +332,70 @@ void* Direction_thread(void* arg) {
     int prio = ((struct sched_param*)arg)->sched_priority;
     printf("Direction Thread Running - Prio: %d\n", prio);
 
-    // State tracking
-    float prevRawSpeed = 0.0f;
-    float prevRawAmp = 0.0f;
+    // Simple state tracking
+    float prevSpeed = 0.0f;
+    float prevAmp = 0.0f;
     
-    // Tunable thresholds
-    const float freq_large_change = 50.0f;     // Large change: respond immediately
-    const float freq_small_change = 15.0f;     // Small change: wait for trend
-    const float min_speed_running = 15.0f;     // Below this, consider stopped
-    const float stability_threshold = 10.0f;   // Speed variation to consider "stable"
-    
-    // History buffer for trend detection (last 3 readings)
-    #define HISTORY_SIZE 3
-    float speed_history[HISTORY_SIZE] = {0};
-    int history_idx = 0;
-    int history_count = 0;
-
-    // Debouncing mechanism: confidence counter
-    int candidate_direction = 0;      // Proposed new direction
-    int confidence_counter = 0;       // How many cycles candidate has been consistent
-    const int confidence_required = 2; // Cycles needed to confirm direction change
-    
-    // Stability detection
-    int stable_cycles = 0;            // How many cycles at roughly same speed
-    const int stable_threshold_cycles = 3; // Cycles to consider motor "stable"
-
-    // Initialize from RTDB
-    pthread_mutex_lock(&updatedVarMutex);
-    prevRawSpeed = detectedSpeedFrequency;
-    prevRawAmp = maxAmplitudeDetected;
-    pthread_mutex_unlock(&updatedVarMutex);
+    // Thresholds for decision making
+    const float MIN_SPEED_RUNNING = 50.0f;      // Hz - below this is "stopped"
+    const float ACCEL_THRESHOLD = 20.0f;        // Hz - significant speed increase
+    const float DECEL_THRESHOLD = 20.0f;        // Hz - significant speed decrease
+    const float STABLE_THRESHOLD = 10.0f;       // Hz - within this range is "stable"
 
     while (1) {
         next_wakeup = TsAdd(next_wakeup, period);
 
-        // Read current raw values from RTDB
-        float currentSpeedFreq = 0.0f;
-        float currentMaxAmp = 0.0f;
+        // Read current values from RTDB
+        float currentSpeed = 0.0f;
+        float currentAmp = 0.0f;
 
         pthread_mutex_lock(&updatedVarMutex);
-        currentSpeedFreq = detectedSpeedFrequency;
-        currentMaxAmp = maxAmplitudeDetected;
+        currentSpeed = detectedSpeedFrequency;
+        currentAmp = maxAmplitudeDetected;
         pthread_mutex_unlock(&updatedVarMutex);
 
-        // Add to history
-        speed_history[history_idx] = currentSpeedFreq;
-        history_idx = (history_idx + 1) % HISTORY_SIZE;
-        if (history_count < HISTORY_SIZE) history_count++;
-
-        // Compute raw deltas
-        float dSpeed = currentSpeedFreq - prevRawSpeed;
-        float dAmp = currentMaxAmp - prevRawAmp;
-
-        // Check if motor is running at stable speed
-        if (fabs(dSpeed) < stability_threshold) {
-            stable_cycles++;
-        } else {
-            stable_cycles = 0; // Reset if speed changes significantly
-        }
-
-        // Determine PROPOSED direction based on immediate changes and trends
-        int proposedDirection = directionValue; // default: keep current
-
-        if (currentSpeedFreq < min_speed_running) {
-            // Motor stopped or very low speed - always immediate
-            proposedDirection = 0;
-        } else {
-            // Check for large immediate changes (respond with priority)
-            if (fabs(dSpeed) > freq_large_change) {
-                if (dSpeed > 0) {
-                    proposedDirection = 1;  // FORWARD (large acceleration)
-                } else {
-                    proposedDirection = -1; // REVERSE (large deceleration)
-                }
-            } 
-            // For smaller changes, use trend analysis if we have enough history
-            else if (history_count >= 2) {
-                // Compute trend from last 2-3 samples
-                float trend = 0.0f;
-                int samples_to_check = (history_count >= HISTORY_SIZE) ? HISTORY_SIZE - 1 : history_count - 1;
-                
-                for (int i = 0; i < samples_to_check; i++) {
-                    int curr_idx = (history_idx - 1 - i + HISTORY_SIZE) % HISTORY_SIZE;
-                    int prev_idx = (history_idx - 2 - i + HISTORY_SIZE) % HISTORY_SIZE;
-                    trend += (speed_history[curr_idx] - speed_history[prev_idx]);
-                }
-                trend /= samples_to_check; // average trend
-
-                // Decision based on trend (only if motor is NOT stable)
-                if (stable_cycles < stable_threshold_cycles && fabs(trend) > freq_small_change) {
-                    if (trend > 0) {
-                        proposedDirection = 1;  // FORWARD (positive trend)
-                    } else {
-                        proposedDirection = -1; // REVERSE (negative trend)
-                    }
-                }
-                // else: motor is stable or no significant trend, keep previous direction
-            }
-            // If we don't have enough history yet, respond to any detectable change
-            else if (fabs(dSpeed) > freq_small_change) {
-                if (dSpeed > 0) {
-                    proposedDirection = 1;
-                } else {
-                    proposedDirection = -1;
-                }
-            }
-        }
-
-        // Apply debouncing logic for direction changes
-        int actualDirection = directionValue; // Start with current direction
+        // Calculate changes
+        float speedDelta = currentSpeed - prevSpeed;
         
-        // Immediate update conditions (no debouncing needed)
-        if (proposedDirection == 0 ||                          // Always stop immediately
-            fabs(dSpeed) > freq_large_change ||                // Large changes immediate
-            proposedDirection == directionValue) {             // No change proposed
-            
-            actualDirection = proposedDirection;
-            candidate_direction = proposedDirection;
-            confidence_counter = 0; // Reset counter
-            
-        } else {
-            // Debouncing for direction reversals
-            if (proposedDirection == candidate_direction) {
-                // Same candidate as before, increase confidence
-                confidence_counter++;
-                
-                if (confidence_counter >= confidence_required) {
-                    // Confirmed! Change direction
-                    actualDirection = proposedDirection;
-                    confidence_counter = 0; // Reset for next change
-                }
-            } else {
-                // New candidate direction, reset counter
-                candidate_direction = proposedDirection;
-                confidence_counter = 1;
-            }
+        // Determine direction/state
+        int newDirection = 0;  // Default: STOPPED or STABLE
+        
+        if (currentSpeed < MIN_SPEED_RUNNING) {
+            // Motor is stopped or very slow
+            newDirection = 0;  // STOPPED
+        } 
+        else if (speedDelta > ACCEL_THRESHOLD) {
+            // Significant speed increase = accelerating forward
+            newDirection = 1;  // FORWARD (accelerating)
+        } 
+        else if (speedDelta < -DECEL_THRESHOLD) {
+            // Significant speed decrease = decelerating/braking
+            newDirection = -1;  // REVERSE (decelerating)
+        } 
+        else if (fabs(speedDelta) <= STABLE_THRESHOLD && currentSpeed >= MIN_SPEED_RUNNING) {
+            // Speed is relatively stable and motor is running
+            // Keep previous direction (maintain state)
+            newDirection = directionValue;
         }
 
         // Update RTDB
         pthread_mutex_lock(&updatedVarMutex);
-        directionValue = actualDirection;
-        directionValues.lastFrequency = currentSpeedFreq;
-        directionValues.lastAmplitude = currentMaxAmp;
+        directionValue = newDirection;
+        directionValues.lastFrequency = currentSpeed;
+        directionValues.lastAmplitude = currentAmp;
         pthread_mutex_unlock(&updatedVarMutex);
 
         // Update state for next iteration
-        prevRawSpeed = currentSpeedFreq;
-        prevRawAmp = currentMaxAmp;
+        prevSpeed = currentSpeed;
+        prevAmp = currentAmp;
 
-        printf("DEBUG DIRECTION (Prio %d): Freq=%.2f (Δ=%.2f), Dir=%d [Prop=%d, Conf=%d/%d, Stable=%d]\n",
-               prio, currentSpeedFreq, dSpeed, actualDirection, 
-               proposedDirection, confidence_counter, confidence_required, stable_cycles);
+        // Debug output
+        const char *dirStr = (newDirection == 1) ? "ACCEL" : 
+                            (newDirection == -1) ? "DECEL" : 
+                            (currentSpeed < MIN_SPEED_RUNNING) ? "STOP" : "STABLE";
+        
+        printf("DEBUG DIRECTION (Prio %d): Speed=%.1f Hz (Δ=%.1f), State=%s\n",
+               prio, currentSpeed, speedDelta, dirStr);
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL);
     }
