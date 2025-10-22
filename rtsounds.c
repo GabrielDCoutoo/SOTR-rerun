@@ -146,12 +146,12 @@ void* Speed_thread(void* arg) {
 // rtsounds.c
 
 void* Display_thread(void* arg) {
-    struct timespec period = {3, 0}; // 5 ms
+    struct timespec period = {5, 0}; // 5 seconds (changed from 250ms)
     struct timespec next_wakeup;
     clock_gettime(CLOCK_MONOTONIC, &next_wakeup); 
 
     int prio = ((struct sched_param*)arg)->sched_priority;
-    printf("Display Thread Running - Prio: %d\n", prio);
+    printf("Display Thread Running - Prio: %d, Period: 5s\n", prio);
 
     // Open log file for appending
     FILE *logf = fopen("rtsounds_log.txt", "a");
@@ -161,34 +161,34 @@ void* Display_thread(void* arg) {
     }
 
     while (1) {
-        // 2. Calcular o próximo tempo de despertar
+        // Calculate next wakeup time
         next_wakeup = TsAdd(next_wakeup, period);
         
-        // Variáveis locais para armazenar o estado lido do RTDB
+        // Local variables to store RTDB state
         float speedFreq = 0.0;
         float maxAmp = 0.0;
         int isIssue = 0;
         int direction = 0; 
-        float issueR = 0.0; // Variável local para issueRatio
+        float issueR = 0.0;
 
-        // 3. Aceder ao RTDB com Mutex para leitura segura
+        // Read from RTDB with mutex protection
         pthread_mutex_lock(&updatedVarMutex);
-        
-        // Leitura das variáveis (agora que estão no rtsounds.h, não causam erro)
         speedFreq = detectedSpeedFrequency;
         maxAmp = maxAmplitudeDetected;
         isIssue = issueDetected; 
         direction = directionValue; 
-        issueR = issueRatio; // Lendo a variável global
-        
+        issueR = issueRatio;
         pthread_mutex_unlock(&updatedVarMutex);
 
-        // 4. Apresentar Resultados 
+        // Display results
         system("clear"); 
 
-        // Conversão de valor numérico para string (apenas para display)
+        // Convert numeric values to strings for display
         const char *issueStatus = isIssue ? "FAULT DETECTED! (High Prio 60)" : "OK";
-        const char *dirStatus = (direction == 1) ? "FORWARD" : (direction == -1) ? "REVERSE" : "STOP";
+        const char *dirStatus = (direction == 1) ? "FORWARD (Accelerating)" : 
+                                (direction == -1) ? "REVERSE (Decelerating)" : 
+                                (direction == 2) ? "STABLE (Constant Speed)" :
+                                "STOPPED";
         
         printf("===========================================\n");
         printf(" REAL-TIME MONITORING SYSTEM (Prio %d)\n", prio);
@@ -201,6 +201,8 @@ void* Display_thread(void* arg) {
         printf(" [DEBUG]\n");
         printf(" Speed Thread Max Amplitude: \t%.2f\n", maxAmp);
         printf(" Issue Thread Ratio: \t\t%.2f\n", issueR); 
+        printf("===========================================\n");
+        printf(" [INFO] Display updates every 5 seconds\n");
         printf("===========================================\n");
 
         // Also write to log file
@@ -216,14 +218,13 @@ void* Display_thread(void* arg) {
             fprintf(logf, " [DEBUG]\n");
             fprintf(logf, " Speed Thread Max Amplitude: \t%.2f\n", maxAmp);
             fprintf(logf, " Issue Thread Ratio: \t\t%.2f\n", issueR); 
-            fprintf(logf, "===========================================\n");
+            fprintf(logf, "===========================================\n\n");
             fflush(logf);
         }
 
-        // 5. Espera Periódica (RT)
+        // Periodic wait (Real-Time)
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL); 
     }
-    // fclose(logf); // unreachable, but good practice if you ever break the loop
     return NULL;
 }
 // rtsounds.c
@@ -358,7 +359,7 @@ void* Direction_thread(void* arg) {
         float speedDelta = currentSpeed - prevSpeed;
         
         // Determine direction/state
-        int newDirection = 0;  // Default: STOPPED or STABLE
+        int newDirection = 0;  // Default: STOPPED
         
         if (currentSpeed < MIN_SPEED_RUNNING) {
             // Motor is stopped or very slow
@@ -374,8 +375,7 @@ void* Direction_thread(void* arg) {
         } 
         else if (fabs(speedDelta) <= STABLE_THRESHOLD && currentSpeed >= MIN_SPEED_RUNNING) {
             // Speed is relatively stable and motor is running
-            // Keep previous direction (maintain state)
-            newDirection = directionValue;
+            newDirection = 2;  // STABLE (constant speed)
         }
 
         // Update RTDB
