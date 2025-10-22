@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
+#include <signal.h>
 
 #define MONO 1
 #define SAMP_FREQ 44100
@@ -190,10 +191,36 @@ void generateTestSignal(TestScenario scenario, uint8_t *buffer, uint32_t *totalS
 }
 
 /* *************************************************************************************
+ * Cleanup and Signal Handler
+ * ***********************************************************************************/
+
+void cleanup() {
+    printf("\nShutting down signal generator...\n");
+    if (playbackDeviceId != 0) {
+        SDL_PauseAudioDevice(playbackDeviceId, SDL_TRUE);
+        SDL_CloseAudioDevice(playbackDeviceId);
+    }
+    if (gPlaybackBuffer != NULL) {
+        free(gPlaybackBuffer);
+    }
+    SDL_Quit();
+}
+
+void handle_signal(int signal) {
+    if (signal == SIGINT) {
+        cleanup();
+        exit(0);
+    }
+}
+
+/* *************************************************************************************
  * Main
  * ***********************************************************************************/
 int main(int argc, char **argv)
 {
+    printf("DEBUG: Program started.\n");
+    fflush(stdout);
+    
     TestScenario scenario = TEST_CONSTANT_SPEED;
     
     // Parse command line argument
@@ -216,24 +243,41 @@ int main(int argc, char **argv)
         printf("  5 - Multiple Harmonics\n");
         printf("\nDefaulting to scenario 0\n");
         printf("===========================================\n");
+        fflush(stdout);
     }
+    
+    printf("DEBUG: Initializing SDL Audio...\n");
+    fflush(stdout);
     
     // Initialize SDL
     if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-        printf("SDL could not initialize! SDL Error: %s\n", SDL_GetError());
+        printf("FATAL ERROR: SDL could not initialize! SDL Error: %s\n", SDL_GetError());
+        fflush(stdout);
         return 1;
     }
+
+    // Register signal handler for Ctrl+C
+    signal(SIGINT, handle_signal);
+    
+    printf("DEBUG: SDL Audio Initialized.\n");
+    fflush(stdout);
     
     // Allocate buffer (20 seconds max)
     gBufferByteSize = 20 * SAMP_FREQ * sizeof(uint16_t);
     gPlaybackBuffer = (Uint8 *)malloc(gBufferByteSize);
     memset(gPlaybackBuffer, 0, gBufferByteSize);
     
+    printf("DEBUG: Buffer allocated.\n");
+    fflush(stdout);
+
     // Generate test signal
     uint32_t totalSamples = 0;
     generateTestSignal(scenario, gPlaybackBuffer, &totalSamples);
     gBufferByteSize = totalSamples * sizeof(uint16_t);
     
+    printf("DEBUG: Signal generated.\n");
+    fflush(stdout);
+
     // Set up playback
     SDL_AudioSpec desiredPlaybackSpec;
     SDL_zero(desiredPlaybackSpec);
@@ -243,20 +287,32 @@ int main(int argc, char **argv)
     desiredPlaybackSpec.samples = ABUFSIZE_SAMPLES;
     desiredPlaybackSpec.callback = audioPlaybackCallback;
     
+    printf("DEBUG: Opening audio device...\n");
+    fflush(stdout);
+    
     // Open playback device
     playbackDeviceId = SDL_OpenAudioDevice(NULL, SDL_FALSE, &desiredPlaybackSpec, &gReceivedPlaybackSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     
     if (playbackDeviceId == 0) {
-        printf("Failed to open playback device! SDL Error: %s\n", SDL_GetError());
+        printf("FATAL ERROR: Failed to open playback device! SDL Error: %s\n", SDL_GetError());
+        fflush(stdout);
+        SDL_Quit(); // Quit SDL before returning
         return 1;
     }
     
+    printf("DEBUG: Audio device opened successfully.\n");
+    fflush(stdout);
+    
     printf("Playing test signal... (will loop)\n");
     printf("Press Ctrl+C to stop\n\n");
+    fflush(stdout);
     
     // Start playback
     gBufferBytePosition = 0;
     SDL_PauseAudioDevice(playbackDeviceId, SDL_FALSE);
+    
+    printf("DEBUG: Playback started. Entering infinite loop.\n");
+    fflush(stdout);
     
     // Keep playing until user stops
     while (1) {
@@ -264,6 +320,8 @@ int main(int argc, char **argv)
     }
     
     // Cleanup
+    printf("DEBUG: Loop exited. Cleaning up.\n");
+    fflush(stdout);
     SDL_CloseAudioDevice(playbackDeviceId);
     free(gPlaybackBuffer);
     SDL_Quit();
