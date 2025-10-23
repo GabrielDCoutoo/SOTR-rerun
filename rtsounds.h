@@ -13,7 +13,7 @@
 #define SAMP_FREQ 44100            /* Sampling frequency used by audio device */
 #define FORMAT AUDIO_U16           /* Format of each sample (signed, unsigned, 8,16 bits, int/float, ...) */
 #define ABUFSIZE_SAMPLES 4096      /* Audio buffer size in sample FRAMES (total samples divided by channel count) */
-#define COF 10000
+#define COF 1000
 #define MAX_RECORDING_SECONDS 10   /* Maximum recording duration */
 #define RECORDING_BUFFER_SECONDS (MAX_RECORDING_SECONDS + 1) /* Buffer size with padding */
 

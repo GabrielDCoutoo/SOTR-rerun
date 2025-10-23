@@ -102,6 +102,28 @@ void audioPlaybackCallback(void *userdata, Uint8 *stream, int len)
     gBufferBytePosition += len;
 }
 
+/* new: add sine to buffer (adds to existing samples, clamps, keeps unsigned 16-bit format) */
+void addSineU16(float freq, uint32_t durationMS, uint16_t amp, uint8_t *buffer, int offset)
+{
+    int i = 0, nSamples = 0;
+    uint16_t *bufU16 = (uint16_t *)buffer;
+    nSamples = ((float)durationMS / 1000) * SAMP_FREQ;
+
+    for (i = 0; i < nSamples; i++) {
+        /* convert current unsigned sample to signed centered */
+        int32_t current = (int32_t)bufU16[offset + i] - 32768;
+        /* compute sample to add */
+        float phase = 2.0f * M_PI * freq * i / SAMP_FREQ;
+        int32_t add = (int32_t)roundf((amp / 2.0f) * sinf(phase));
+        int32_t summed = current + add;
+        /* clamp to signed 16-bit range */
+        if (summed > 32767) summed = 32767;
+        if (summed < -32768) summed = -32768;
+        /* store back as unsigned */
+        bufU16[offset + i] = (uint16_t)(summed + 32768);
+    }
+}
+
 /* *************************************************************************************
  * Generate test signal based on scenario
  * ***********************************************************************************/
@@ -118,7 +140,7 @@ void generateTestSignal(TestScenario scenario, uint8_t *buffer, uint32_t *totalS
         case TEST_CONSTANT_SPEED:
             printf("Scenario: Constant Speed (100 Hz)\n");
             printf("Expected: Speed = 100 Hz, Direction = STABLE\n");
-            genSineU16(100.0, 10000, 30000, buffer, offset);  // 10 seconds at 100 Hz
+            genSineU16(100.0, 10000, 30000, buffer, offset);  // fixed: 100 Hz
             *totalSamples = (10000 * SAMP_FREQ) / 1000;
             break;
             
@@ -141,20 +163,24 @@ void generateTestSignal(TestScenario scenario, uint8_t *buffer, uint32_t *totalS
             printf("Expected: Speed = 120 Hz, Issue = FAULT DETECTED\n");
             // Base frequency (motor speed)
             genSineU16(120.0, 10000, 30000, buffer, offset);
-            // Add high-frequency noise (bearing fault at 3 kHz)
+            // Add high-frequency noise (bearing fault at 3 kHz) as additions
             offset = 0;
             for (int i = 0; i < 10000 / 100; i++) {
-                genSineU16(3000.0, 100, 12000, buffer, offset);  // 20% amplitude of base
+                addSineU16(3000.0, 100, 12000, buffer, offset);  // ADD burst (do not overwrite)
                 offset += (100 * SAMP_FREQ) / 1000;
             }
             *totalSamples = (10000 * SAMP_FREQ) / 1000;
             break;
-            
+
         case TEST_START_STOP:
             printf("Scenario: Start → Run → Stop\n");
             printf("Expected: STOP → FORWARD → STABLE → REVERSE → STOP\n");
-            // Stop (silence)
-            memset(buffer, 128, (1000 * SAMP_FREQ / 1000) * sizeof(uint16_t));
+            // Stop (silence) -- set to center value for AUDIO_U16
+            {
+                uint16_t *bufU16 = (uint16_t *)buffer;
+                int n = (1000 * SAMP_FREQ) / 1000;
+                for (int i = 0; i < n; i++) bufU16[i] = 32768;
+            }
             offset = (1000 * SAMP_FREQ) / 1000;
             
             // Start (acceleration)
@@ -169,8 +195,12 @@ void generateTestSignal(TestScenario scenario, uint8_t *buffer, uint32_t *totalS
             genChirpU16(150.0, 0.0, 2000, 30000, buffer, offset);
             offset += (2000 * SAMP_FREQ) / 1000;
             
-            // Stopped
-            memset(buffer + offset * sizeof(uint16_t), 128, (2000 * SAMP_FREQ / 1000) * sizeof(uint16_t));
+            // Stopped (silence)
+            {
+                uint16_t *bufU16 = (uint16_t *)buffer + offset;
+                int n = (2000 * SAMP_FREQ) / 1000;
+                for (int i = 0; i < n; i++) bufU16[i] = 32768;
+            }
             offset += (2000 * SAMP_FREQ) / 1000;
             
             *totalSamples = offset;
@@ -179,9 +209,15 @@ void generateTestSignal(TestScenario scenario, uint8_t *buffer, uint32_t *totalS
         case TEST_MULTIPLE_HARMONICS:
             printf("Scenario: Multiple Harmonics (80, 160, 240 Hz)\n");
             printf("Expected: Speed should detect strongest frequency\n");
-            genSineU16(80.0, 10000, 20000, buffer, 0);
-            genSineU16(160.0, 10000, 15000, buffer, 0);  // Overlays on same buffer
-            genSineU16(240.0, 10000, 10000, buffer, 0);
+            // initialize to silence (center)
+            {
+                uint16_t *bufU16 = (uint16_t *)buffer;
+                int n = (10000 * SAMP_FREQ) / 1000;
+                for (int i = 0; i < n; i++) bufU16[i] = 32768;
+            }
+            addSineU16(80.0, 10000, 20000, buffer, 0);
+            addSineU16(160.0, 10000, 15000, buffer, 0);
+            addSineU16(240.0, 10000, 10000, buffer, 0);
             *totalSamples = (10000 * SAMP_FREQ) / 1000;
             break;
     }

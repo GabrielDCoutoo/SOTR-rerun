@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <SDL.h>
 #include <semaphore.h>
+#include <time.h>    // added for timestamped filenames
 
 struct timespec TsAdd(struct timespec ts1, struct timespec ts2) {
     struct timespec tr;
@@ -32,6 +33,8 @@ SDL_AudioDeviceID recordingDeviceId = 0;
 Uint8 *gRecordingBuffer = NULL;
 SDL_AudioSpec gReceivedRecordingSpec;
 Uint32 gBufferBytePosition = 0, gBufferByteMaxPosition = 0, gBufferByteSize = 0;
+
+int gBytesPerSample = 0; // <-- new: bytes per audio frame (channels * bytes per sample)
 
 volatile float detectedSpeedFrequency = 0.0, maxAmplitudeDetected = 0.0;
 
@@ -97,12 +100,12 @@ void* Speed_thread(void* arg) {
         // 2. Definir o próximo tempo de despertar (antes de esperar pelos dados)
         next_wakeup = TsAdd(next_wakeup, period);
 
-        printf("DEBUG SPEED: Dados recebidos! A processar...\n"); 
+        // printf("DEBUG SPEED: Dados recebidos! A processar...\n"); // commented for cleaner output 
         
         buffer* readBuffer = cab_getReadBuffer(&cab_buffer); 
 
         if (readBuffer != NULL) {
-            
+            filterLP(COF,SAMP_FREQ,(uint8_t*)readBuffer->buf,N);
             // 5. Centrar as amostras (AUDIO_U16) e converter para complex double
             for (int k = 0; k < N; k++) {
                 double centered_sample = (double)readBuffer->buf[k] - 32768.0; 
@@ -115,8 +118,8 @@ void* Speed_thread(void* arg) {
             // 7. Executar FFT
             fftCompute(x, N);
             
-            // 8. Obter Amplitudes (usando a macro SAMP_FREQ)
-            fftGetAmplitude(x, N, SAMP_FREQ, fk, Ak); // Chamar a função
+            // 8. Obter Amplitudes (use runtime device sample rate)
+            fftGetAmplitude(x, N, gReceivedRecordingSpec.freq, fk, Ak); // Chamar a função
             
             // 9. Lógica de deteção de velocidade
             float maxA = 0.0;
@@ -134,7 +137,7 @@ void* Speed_thread(void* arg) {
             maxAmplitudeDetected = maxA;
             pthread_mutex_unlock(&updatedVarMutex);
             
-            printf("DEBUG SPEED: Max Freq=%.2f Hz, Max Amp=%.2f (Loop concluído)\n", maxF, maxA);
+            // printf("DEBUG SPEED: Max Freq=%.2f Hz, Max Amp=%.2f (Loop concluído)\n", maxF, maxA); // commented
         }
         
         // 11. Periodic Wait (Tempo Real Absoluto)
@@ -146,7 +149,7 @@ void* Speed_thread(void* arg) {
 // rtsounds.c
 
 void* Display_thread(void* arg) {
-    struct timespec period = {5, 0}; // 5 seconds (changed from 250ms)
+    struct timespec period = {2, 0}; // 5 seconds (changed from 250ms)
     struct timespec next_wakeup;
     clock_gettime(CLOCK_MONOTONIC, &next_wakeup); 
 
@@ -222,6 +225,29 @@ void* Display_thread(void* arg) {
             fflush(logf);
         }
 
+        // Check for dump trigger file (create /tmp/rtsounds_dump to request a WAV dump)
+        FILE *tf = fopen("/tmp/rtsounds_dump", "r");
+        if (tf) {
+            fclose(tf);
+            // remove trigger file
+            remove("/tmp/rtsounds_dump");
+
+            // create timestamped filename
+            char fname[256];
+            time_t t = time(NULL);
+            struct tm tm;
+            localtime_r(&t, &tm);
+            snprintf(fname, sizeof(fname), "captured_%04d%02d%02d_%02d%02d%02d.wav",
+                     tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+                     tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+            dumpCapturedBufferToWav(fname);  // call top-level helper
+            if (logf) {
+                fprintf(logf, "[INFO] Captured buffer dumped to %s\n\n", fname);
+                fflush(logf);
+            }
+        }
+
         // Periodic wait (Real-Time)
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL); 
     }
@@ -276,7 +302,7 @@ void* Issue_thread(void* arg) {
 
             // 6. Executar FFT e obter Amplitudes
             fftCompute(x, N);
-            fftGetAmplitude(x, N, SAMP_FREQ, fk, Ak);
+            fftGetAmplitude(x, N, gReceivedRecordingSpec.freq, fk, Ak);
             
             // 7. LÓGICA DE DETEÇÃO DE FALHAS
             float maxHighFreqAmp = 0.0;
@@ -308,9 +334,9 @@ void* Issue_thread(void* arg) {
             issueDetected = issueFound;
             pthread_mutex_unlock(&updatedVarMutex);
             
-            printf("DEBUG ISSUE (Prio %d): High Amp=%.2f, Ratio=%.2f (Falha: %s)\n", prio, maxHighFreqAmp, ratio, issueFound ? "SIM" : "NÃO");
+            // printf("DEBUG ISSUE (Prio %d): High Amp=%.2f, Ratio=%.2f (Falha: %s)\n", prio, maxHighFreqAmp, ratio, issueFound ? "SIM" : "NÃO"); // commented
         } else {
-            printf("DEBUG ISSUE (Prio %d): Sem buffer disponível, ignorando ciclo.\n", prio);
+            // printf("DEBUG ISSUE (Prio %d): Sem buffer disponível, ignorando ciclo.\n", prio); // commented
         }
         
         // 10. Espera Periódica (Tempo Real Absoluto)
@@ -394,8 +420,9 @@ void* Direction_thread(void* arg) {
                             (newDirection == -1) ? "DECEL" : 
                             (currentSpeed < MIN_SPEED_RUNNING) ? "STOP" : "STABLE";
         
-        printf("DEBUG DIRECTION (Prio %d): Speed=%.1f Hz (Δ=%.1f), State=%s\n",
-               prio, currentSpeed, speedDelta, dirStr);
+        // printf("DEBUG DIRECTION (Prio %d): Freq=%.2f (Δ=%.2f), Dir=%d [Prop=%d, Conf=%d/%d, Stable=%d]\n",
+        //        prio, currentSpeedFreq, dSpeed, actualDirection, 
+        //        proposedDirection, confidence_counter, confidence_required, stable_cycles); // commented
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL);
     }
@@ -432,7 +459,7 @@ void* FFT_thread(void* arg) {
         buffer* readBuffer = cab_getReadBuffer(&cab_buffer);
         
         if (readBuffer != NULL) {
-            printf("DEBUG FFT: Processing buffer %d for spectral analysis\n", readBuffer->index);
+            // printf("DEBUG FFT: Processing buffer %d for spectral analysis\n", readBuffer->index); // commented
 
             for (int k = 0; k < N; k++) {
                 double centered_sample = (double)readBuffer->buf[k] - 32768.0;
@@ -441,7 +468,7 @@ void* FFT_thread(void* arg) {
             cab_releaseReadBuffer(&cab_buffer, readBuffer->index);
 
             fftCompute(x, N);
-            fftGetAmplitude(x, N, SAMP_FREQ, fk, Ak);
+            fftGetAmplitude(x, N, gReceivedRecordingSpec.freq, fk, Ak);
 
             printf("\n╔═══════════════════════════════════════════╗\n");
             printf("║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║\n");
@@ -483,10 +510,10 @@ void* FFT_thread(void* arg) {
                 fflush(logf);
             }
         } else {
-            printf("DEBUG FFT: No buffer available for spectral analysis\n");
+            // printf("DEBUG FFT: No buffer available for spectral analysis\n"); // commented
             if (logf) {
-                fprintf(logf, "DEBUG FFT: No buffer available for spectral analysis\n");
-                fflush(logf);
+                // fprintf(logf, "DEBUG FFT: No buffer available for spectral analysis\n"); // commented
+                // fflush(logf);
             }
         }
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL);
@@ -505,23 +532,9 @@ void* Preprocessing_thread(void* arg) {
     printf("Preprocessing Thread (LP Filter) Running - Prio: %d\n", prio);
 
     while (1) {
-        next_wakeup = TsAdd(next_wakeup, period);
-
-        buffer* readBuffer = cab_getReadBuffer(&cab_buffer);
-        if (readBuffer != NULL) {
-            printf("DEBUG PREPROCESSING: Applying LP filter to buffer %d\n", readBuffer->index);
-            filterLP(COF, SAMP_FREQ, (uint8_t*)readBuffer->buf, ABUFSIZE_SAMPLES);
-
-            cab_releaseReadBuffer(&cab_buffer, readBuffer->index);
-
-            printf("DEBUG PREPROCESSING: LP filter applied and buffer released\n");
-        } else {
-            printf("DEBUG PREPROCESSING: No buffer available\n");
-        }
-
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL);
-    }
+        SDL_Delay(5000); // Small delay to prevent busy waiting
     return NULL;
+    }
 }
 
 /* *************************
@@ -556,10 +569,15 @@ int initialize_sdl_audio(int index) {
         return 1;
     }
 
-    int bytesPerSample = gReceivedRecordingSpec.channels * (SDL_AUDIO_BITSIZE(gReceivedRecordingSpec.format) / 8);
-    int bytesPerSecond = gReceivedRecordingSpec.freq * bytesPerSample;
+    // Compute and store bytes per sample/frame for use in the callback
+    gBytesPerSample = gReceivedRecordingSpec.channels * (SDL_AUDIO_BITSIZE(gReceivedRecordingSpec.format) / 8);
+    int bytesPerSecond = gReceivedRecordingSpec.freq * gBytesPerSample;
     gBufferByteSize = RECORDING_BUFFER_SECONDS * bytesPerSecond;
     gBufferByteMaxPosition = MAX_RECORDING_SECONDS * bytesPerSecond;
+
+    // Print actual runtime audio spec for debugging
+    fprintf(stderr, "Recording device opened: freq=%d channels=%d format=0x%x samples=%d bytesPerSample=%d\n",
+            gReceivedRecordingSpec.freq, gReceivedRecordingSpec.channels, (int)gReceivedRecordingSpec.format, gReceivedRecordingSpec.samples, gBytesPerSample);
 
     return 0;
 }
@@ -799,12 +817,14 @@ void audioRecordingCallback(void* userdata, Uint8* stream, int len) {
     // 1. Obter o buffer de escrita do cab_buffer global
     buffer* writeBuffer = cab_getWriteBuffer(&cab_buffer);
     
-    // len deve ser igual a ABUFSIZE_SAMPLES * sizeof(uint16_t)
-    if (writeBuffer != NULL && len == BUF_SIZE * sizeof(uint16_t)) {
+    if (writeBuffer != NULL) {
+        // Copy at most the size of the CAB buffer to avoid overflow.
+        size_t bufSizeBytes = sizeof(writeBuffer->buf); // bytes available in cab buffer
+        size_t copyLen = (size_t)len;
+        if (copyLen > bufSizeBytes) copyLen = bufSizeBytes;
         
-        // 2. Copiar os dados (raw bytes do SDL) para o buffer do CAB (uint16_t)
-        // BUF_SIZE (4096) é em samples (uint16_t), len (8192) é em bytes
-        memcpy(writeBuffer->buf, stream, len);
+        // Copy the received bytes into the CAB buffer (caller must interpret format)
+        memcpy(writeBuffer->buf, stream, copyLen);
 
         // 3. Libertar o buffer de escrita, sinalizando que está pronto para leitura
         cab_releaseWriteBuffer(&cab_buffer, writeBuffer->index);
@@ -900,3 +920,28 @@ void printSamplesU16(uint8_t *buffer, int nsamples) {
     printf("\n");
 }
 
+// Add this helper at file scope (not inside any other function)
+void dumpCapturedBufferToWav(const char *filename) {
+    if (gReceivedRecordingSpec.freq <= 0) {
+        fprintf(stderr, "dumpCapturedBufferToWav: invalid sample rate\n");
+        return;
+    }
+
+    // warn if format/channels differ (still attempt dump)
+    if (gReceivedRecordingSpec.format != FORMAT || gReceivedRecordingSpec.channels != MONO) {
+        fprintf(stderr, "dumpCapturedBufferToWav: unexpected format=0x%x channels=%d\n",
+                (int)gReceivedRecordingSpec.format, gReceivedRecordingSpec.channels);
+    }
+
+    buffer* readBuffer = cab_getReadBuffer(&cab_buffer);
+    if (!readBuffer) {
+        fprintf(stderr, "dumpCapturedBufferToWav: no buffer available\n");
+        return;
+    }
+
+    size_t bytes = ABUFSIZE_SAMPLES * sizeof(uint16_t);
+    save_audio_to_wav(filename, (Uint8*)readBuffer->buf, (Uint32)bytes, gReceivedRecordingSpec.freq);
+
+    cab_releaseReadBuffer(&cab_buffer, readBuffer->index);
+    fprintf(stderr, "WAV dump written: %s (fs=%d, bytes=%zu)\n", filename, gReceivedRecordingSpec.freq, bytes);
+}

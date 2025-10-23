@@ -31,7 +31,7 @@ clean:
 run: $(TARGET)
 	clear
 	
-	sudo ./rtsounds -prio 80 10 40 60 50 30 20
+	sudo ./rtsounds -prio 80 45 40 60 50 30 20
 
 # Target for signalgen
 signalgen: signalgen.c
