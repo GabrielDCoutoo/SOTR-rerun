@@ -124,8 +124,14 @@ void* Speed_thread(void* arg) {
             // 9. Lógica de deteção de velocidade
             float maxA = 0.0;
             float maxF = 0.0;
+            // Add a threshold (e.g., 500.0) to ignore quiet noise
+            // We use the COF define from rtsounds.h
+            // We'll add a little buffer (e.g., 50 Hz) just to be safe.
+            const float MAX_FREQ_TO_CHECK = COF + 50.0; 
+
             for(int k=1; k<=N/2; k++) {
-                if (Ak[k] > maxA) {
+                // Check if (it's stronger) AND (it's below our max speed frequency)
+                if (Ak[k] > maxA && fk[k] < MAX_FREQ_TO_CHECK) {
                     maxA = Ak[k];
                     maxF = fk[k];
                 }

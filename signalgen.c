@@ -49,13 +49,7 @@ void genSineU16(float freq, uint32_t durationMS, uint16_t amp, uint8_t *buffer, 
 }
 
 /* *************************************************************************************
- * Generate a frequency sweep (chirp)
- * startFreq: starting frequency in Hz
- * endFreq: ending frequency in Hz
- * durationMS: duration in milliseconds
- * amp: amplitude
- * buffer: output buffer
- * offset: starting offset in buffer
+ * Generate a frequency sweep (chirp) - CORRECTED VERSION
  * ***********************************************************************************/
 void genChirpU16(float startFreq, float endFreq, uint32_t durationMS, uint16_t amp, uint8_t *buffer, int offset)
 {
@@ -63,13 +57,23 @@ void genChirpU16(float startFreq, float endFreq, uint32_t durationMS, uint16_t a
     uint16_t *bufU16 = (uint16_t *)buffer;
     
     nSamples = ((float)durationMS / 1000) * SAMP_FREQ;
-    float freqRate = (endFreq - startFreq) / nSamples;
     
+    float currentFreq;
+    double phase = 0.0; // Use a double for phase and accumulate it
+
     for (i = 0; i < nSamples; i++) {
-        float currentFreq = startFreq + freqRate * i;
-        float phase = 2 * M_PI * currentFreq * i / SAMP_FREQ;
+        // Calculate the frequency at this sample
+        currentFreq = startFreq + (endFreq - startFreq) * i / nSamples;
+        
+        // Add the current phase step
+        phase += 2.0 * M_PI * currentFreq / SAMP_FREQ;
+
+        // Generate the sample
         bufU16[offset + i] = 32768 + (amp / 2) * sin(phase);
     }
+    
+    // Optional: Reset phase if it gets too large to prevent overflow
+    // if (phase > 2.0 * M_PI * 1000000.0) phase = 0.0; 
 }
 
 /* *************************************************************************************
@@ -140,21 +144,21 @@ void generateTestSignal(TestScenario scenario, uint8_t *buffer, uint32_t *totalS
         case TEST_CONSTANT_SPEED:
             printf("Scenario: Constant Speed (100 Hz)\n");
             printf("Expected: Speed = 100 Hz, Direction = STABLE\n");
-            genSineU16(100.0, 10000, 30000, buffer, offset);  // fixed: 100 Hz
+            genSineU16(800.0, 10000, 30000, buffer, offset);  // fixed: 100 Hz
             *totalSamples = (10000 * SAMP_FREQ) / 1000;
             break;
             
         case TEST_ACCELERATION:
             printf("Scenario: Acceleration (50 Hz → 200 Hz over 8 seconds)\n");
             printf("Expected: Direction = FORWARD (accelerating)\n");
-            genChirpU16(50.0, 200.0, 8000, 30000, buffer, offset);
+            genChirpU16(400.0, 800.0, 8000, 30000, buffer, offset);
             *totalSamples = (8000 * SAMP_FREQ) / 1000;
             break;
             
         case TEST_DECELERATION:
             printf("Scenario: Deceleration (200 Hz → 50 Hz over 8 seconds)\n");
             printf("Expected: Direction = REVERSE (decelerating)\n");
-            genChirpU16(200.0, 50.0, 8000, 30000, buffer, offset);
+            genChirpU16(800.0,400.0, 8000, 30000, buffer, offset);
             *totalSamples = (8000 * SAMP_FREQ) / 1000;
             break;
             
@@ -162,7 +166,7 @@ void generateTestSignal(TestScenario scenario, uint8_t *buffer, uint32_t *totalS
             printf("Scenario: Constant Speed + Bearing Fault\n");
             printf("Expected: Speed = 120 Hz, Issue = FAULT DETECTED\n");
             // Base frequency (motor speed)
-            genSineU16(120.0, 10000, 30000, buffer, offset);
+            genSineU16(420.0, 10000, 30000, buffer, offset);
             // Add high-frequency noise (bearing fault at 3 kHz) as additions
             offset = 0;
             for (int i = 0; i < 10000 / 100; i++) {
@@ -184,15 +188,15 @@ void generateTestSignal(TestScenario scenario, uint8_t *buffer, uint32_t *totalS
             offset = (1000 * SAMP_FREQ) / 1000;
             
             // Start (acceleration)
-            genChirpU16(0.0, 150.0, 2000, 30000, buffer, offset);
+            genChirpU16(0.0, 400.0, 2000, 30000, buffer, offset);
             offset += (2000 * SAMP_FREQ) / 1000;
             
             // Run (constant speed)
-            genSineU16(150.0, 3000, 30000, buffer, offset);
+            genSineU16(400.0, 3000, 30000, buffer, offset);
             offset += (3000 * SAMP_FREQ) / 1000;
             
             // Stop (deceleration)
-            genChirpU16(150.0, 0.0, 2000, 30000, buffer, offset);
+            genChirpU16(400.0, 0.0, 2000, 30000, buffer, offset);
             offset += (2000 * SAMP_FREQ) / 1000;
             
             // Stopped (silence)

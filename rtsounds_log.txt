@@ -1,0 +1,880 @@
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	0.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STOPPED
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	0.00
+ Issue Thread Ratio: 		0.00
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ No significant peaks detected (all < 100) ║
+╚═══════════════════════════════════════════╝
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:    75.0 Hz  │  Amp:    22162.9    ║
+║ Peak 2:    53.0 Hz  │  Amp:    13964.5    ║
+║ Peak 3:    21.0 Hz  │  Amp:    12357.1    ║
+║ Peak 4:    32.0 Hz  │  Amp:    10447.6    ║
+║ Peak 5:    64.0 Hz  │  Amp:     8179.0    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	75.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD (Accelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	22088.48
+ Issue Thread Ratio: 		0.03
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:    53.0 Hz  │  Amp:    23963.6    ║
+║ Peak 2:    21.0 Hz  │  Amp:    11012.7    ║
+║ Peak 3:    96.0 Hz  │  Amp:     9320.2    ║
+║ Peak 4:   161.0 Hz  │  Amp:     8732.6    ║
+║ Peak 5:    32.0 Hz  │  Amp:     8599.8    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	53.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD (Accelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	22008.04
+ Issue Thread Ratio: 		0.03
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   366.0 Hz  │  Amp:    14560.8    ║
+║ Peak 2:   613.0 Hz  │  Amp:    12815.7    ║
+║ Peak 3:   376.0 Hz  │  Amp:    10366.1    ║
+║ Peak 4:   624.0 Hz  │  Amp:     8377.5    ║
+║ Peak 5:   602.0 Hz  │  Amp:     7783.5    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	312.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD (Accelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	14069.52
+ Issue Thread Ratio: 		0.15
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   452.0 Hz  │  Amp:    25199.4    ║
+║ Peak 2:   150.0 Hz  │  Amp:    10406.2    ║
+║ Peak 3:   753.0 Hz  │  Amp:     8455.3    ║
+║ Peak 4:   441.0 Hz  │  Amp:     6311.6    ║
+║ Peak 5:  1345.0 Hz  │  Amp:     5513.2    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	452.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STABLE (Constant Speed)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	25073.61
+ Issue Thread Ratio: 		0.09
+===========================================
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	344.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	15472.73
+ Issue Thread Ratio: 		0.11
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   279.0 Hz  │  Amp:    18824.9    ║
+║ Peak 2:   473.0 Hz  │  Amp:    11304.4    ║
+║ Peak 3:   290.0 Hz  │  Amp:    10565.1    ║
+║ Peak 4:   269.0 Hz  │  Amp:     8327.4    ║
+║ Peak 5:    96.0 Hz  │  Amp:     6732.0    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	53.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	12824.50
+ Issue Thread Ratio: 		0.06
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:    53.0 Hz  │  Amp:    12855.0    ║
+║ Peak 2:    64.0 Hz  │  Amp:     9976.2    ║
+║ Peak 3:   107.0 Hz  │  Amp:     9739.0    ║
+║ Peak 4:   172.0 Hz  │  Amp:     9058.7    ║
+║ Peak 5:   150.0 Hz  │  Amp:     7562.5    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	53.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	18774.44
+ Issue Thread Ratio: 		0.03
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:    53.0 Hz  │  Amp:    25563.2    ║
+║ Peak 2:    21.0 Hz  │  Amp:    11592.9    ║
+║ Peak 3:    43.0 Hz  │  Amp:     9906.8    ║
+║ Peak 4:   118.0 Hz  │  Amp:     7853.3    ║
+║ Peak 5:   107.0 Hz  │  Amp:     7377.9    ║
+╚═══════════════════════════════════════════╝
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   581.0 Hz  │  Amp:    13620.0    ║
+║ Peak 2:   355.0 Hz  │  Amp:    10283.5    ║
+║ Peak 3:   592.0 Hz  │  Amp:    10145.2    ║
+║ Peak 4:   344.0 Hz  │  Amp:     9713.4    ║
+║ Peak 5:   570.0 Hz  │  Amp:     9601.1    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	516.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD (Accelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	14391.78
+ Issue Thread Ratio: 		0.15
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   452.0 Hz  │  Amp:    24965.5    ║
+║ Peak 2:   150.0 Hz  │  Amp:    10379.3    ║
+║ Peak 3:   753.0 Hz  │  Amp:     8549.5    ║
+║ Peak 4:   441.0 Hz  │  Amp:     6268.4    ║
+║ Peak 5:  1345.0 Hz  │  Amp:     5422.6    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	452.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STABLE (Constant Speed)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	25107.38
+ Issue Thread Ratio: 		0.09
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   301.0 Hz  │  Amp:    14988.8    ║
+║ Peak 2:   506.0 Hz  │  Amp:    12590.0    ║
+║ Peak 3:   312.0 Hz  │  Amp:    11811.4    ║
+║ Peak 4:   516.0 Hz  │  Amp:    11367.5    ║
+║ Peak 5:   495.0 Hz  │  Amp:     8106.8    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	344.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	15850.78
+ Issue Thread Ratio: 		0.19
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   236.0 Hz  │  Amp:    10273.4    ║
+║ Peak 2:    86.0 Hz  │  Amp:     8740.4    ║
+║ Peak 3:    53.0 Hz  │  Amp:     8062.8    ║
+║ Peak 4:    64.0 Hz  │  Amp:     7918.4    ║
+║ Peak 5:   193.0 Hz  │  Amp:     7760.7    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	236.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	10708.06
+ Issue Thread Ratio: 		0.07
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   107.0 Hz  │  Amp:    16454.3    ║
+║ Peak 2:   204.0 Hz  │  Amp:     9088.9    ║
+║ Peak 3:    96.0 Hz  │  Amp:     7787.9    ║
+║ Peak 4:    75.0 Hz  │  Amp:     6757.8    ║
+║ Peak 5:   215.0 Hz  │  Amp:     6186.1    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	53.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STABLE (Constant Speed)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	14439.28
+ Issue Thread Ratio: 		0.03
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   581.0 Hz  │  Amp:    13808.8    ║
+║ Peak 2:   355.0 Hz  │  Amp:    10437.8    ║
+║ Peak 3:   592.0 Hz  │  Amp:    10209.4    ║
+║ Peak 4:   570.0 Hz  │  Amp:     9880.3    ║
+║ Peak 5:   344.0 Hz  │  Amp:     9745.4    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	290.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD (Accelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	17449.63
+ Issue Thread Ratio: 		0.18
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   452.0 Hz  │  Amp:    25012.1    ║
+║ Peak 2:   150.0 Hz  │  Amp:    10561.6    ║
+║ Peak 3:   753.0 Hz  │  Amp:     9053.0    ║
+║ Peak 4:   441.0 Hz  │  Amp:     6478.9    ║
+║ Peak 5:   742.0 Hz  │  Amp:     4937.6    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	452.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STABLE (Constant Speed)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	24795.36
+ Issue Thread Ratio: 		0.09
+===========================================
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	366.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	17918.24
+ Issue Thread Ratio: 		0.10
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   301.0 Hz  │  Amp:    15436.0    ║
+║ Peak 2:   506.0 Hz  │  Amp:    12569.9    ║
+║ Peak 3:   312.0 Hz  │  Amp:    12162.6    ║
+║ Peak 4:   516.0 Hz  │  Amp:    10854.3    ║
+║ Peak 5:   495.0 Hz  │  Amp:     7559.9    ║
+╚═══════════════════════════════════════════╝
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:    96.0 Hz  │  Amp:    16254.2    ║
+║ Peak 2:   279.0 Hz  │  Amp:     7621.0    ║
+║ Peak 3:    32.0 Hz  │  Amp:     7103.4    ║
+║ Peak 4:   161.0 Hz  │  Amp:     6750.5    ║
+║ Peak 5:    43.0 Hz  │  Amp:     6321.9    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	96.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	16292.39
+ Issue Thread Ratio: 		0.09
+===========================================
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	53.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STABLE (Constant Speed)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	20972.28
+ Issue Thread Ratio: 		0.01
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:    53.0 Hz  │  Amp:    20821.3    ║
+║ Peak 2:    21.0 Hz  │  Amp:    10229.5    ║
+║ Peak 3:    75.0 Hz  │  Amp:    10194.6    ║
+║ Peak 4:   161.0 Hz  │  Amp:     9518.2    ║
+║ Peak 5:    43.0 Hz  │  Amp:     8661.4    ║
+╚═══════════════════════════════════════════╝
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   549.0 Hz  │  Amp:    15956.1    ║
+║ Peak 2:   333.0 Hz  │  Amp:    14288.7    ║
+║ Peak 3:   538.0 Hz  │  Amp:    11277.8    ║
+║ Peak 4:   322.0 Hz  │  Amp:     8704.3    ║
+║ Peak 5:   344.0 Hz  │  Amp:     8255.0    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	441.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD (Accelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	13263.04
+ Issue Thread Ratio: 		0.27
+===========================================
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	0.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STOPPED
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	0.00
+ Issue Thread Ratio: 		0.00
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ No significant peaks detected (all < 100) ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	290.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	20007.54
+ Issue Thread Ratio: 		0.28
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   290.0 Hz  │  Amp:    19149.7    ║
+║ Peak 2:   279.0 Hz  │  Amp:     6598.7    ║
+║ Peak 3:   882.0 Hz  │  Amp:     6348.2    ║
+║ Peak 4:   861.0 Hz  │  Amp:     5720.6    ║
+║ Peak 5:   872.0 Hz  │  Amp:     5307.7    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	53.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	20485.81
+ Issue Thread Ratio: 		0.16
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   161.0 Hz  │  Amp:    10021.2    ║
+║ Peak 2:   322.0 Hz  │  Amp:     9411.7    ║
+║ Peak 3:   139.0 Hz  │  Amp:     8577.2    ║
+║ Peak 4:    53.0 Hz  │  Amp:     7578.1    ║
+║ Peak 5:   107.0 Hz  │  Amp:     7455.0    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	43.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STOPPED
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	10677.35
+ Issue Thread Ratio: 		0.10
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:    43.0 Hz  │  Amp:    15271.7    ║
+║ Peak 2:   150.0 Hz  │  Amp:    12352.0    ║
+║ Peak 3:    96.0 Hz  │  Amp:    11317.4    ║
+║ Peak 4:   183.0 Hz  │  Amp:    10763.3    ║
+║ Peak 5:   161.0 Hz  │  Amp:     9804.8    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	269.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	15049.39
+ Issue Thread Ratio: 		0.25
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   333.0 Hz  │  Amp:     9878.4    ║
+║ Peak 2:   979.0 Hz  │  Amp:     8761.5    ║
+║ Peak 3:   322.0 Hz  │  Amp:     8155.9    ║
+║ Peak 4:  1001.0 Hz  │  Amp:     7520.5    ║
+║ Peak 5:   990.0 Hz  │  Amp:     6353.6    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	398.00 Hz
+ ISSUE (Prio 60): 	FAULT DETECTED! (High Prio 60)
+ DIRECTION (Prio 50): 	STABLE (Constant Speed)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	14688.65
+ Issue Thread Ratio: 		0.84
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   398.0 Hz  │  Amp:    15214.0    ║
+║ Peak 2:  1195.0 Hz  │  Amp:    11304.2    ║
+║ Peak 3:  1205.0 Hz  │  Amp:     9515.8    ║
+║ Peak 4:  2799.0 Hz  │  Amp:     4352.1    ║
+║ Peak 5:  1184.0 Hz  │  Amp:     3527.9    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	312.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	18923.35
+ Issue Thread Ratio: 		0.28
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   312.0 Hz  │  Amp:    18019.7    ║
+║ Peak 2:   301.0 Hz  │  Amp:     8003.8    ║
+║ Peak 3:   936.0 Hz  │  Amp:     6081.7    ║
+║ Peak 4:   915.0 Hz  │  Amp:     5625.0    ║
+║ Peak 5:   322.0 Hz  │  Amp:     5513.5    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	107.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	9978.22
+ Issue Thread Ratio: 		0.20
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:    53.0 Hz  │  Amp:    11751.4    ║
+║ Peak 2:    64.0 Hz  │  Amp:     7586.2    ║
+║ Peak 3:    43.0 Hz  │  Amp:     4520.2    ║
+║ Peak 4:   161.0 Hz  │  Amp:     4435.1    ║
+║ Peak 5:    32.0 Hz  │  Amp:     4338.2    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	527.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD (Accelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	5487.03
+ Issue Thread Ratio: 		0.24
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   204.0 Hz  │  Amp:     7091.5    ║
+║ Peak 2:   312.0 Hz  │  Amp:     5474.2    ║
+║ Peak 3:    53.0 Hz  │  Amp:     5025.8    ║
+║ Peak 4:   107.0 Hz  │  Amp:     4986.1    ║
+║ Peak 5:  1012.0 Hz  │  Amp:     4691.6    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	269.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	14989.43
+ Issue Thread Ratio: 		0.20
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   312.0 Hz  │  Amp:    19859.6    ║
+║ Peak 2:   301.0 Hz  │  Amp:     7798.5    ║
+║ Peak 3:   925.0 Hz  │  Amp:     7650.2    ║
+║ Peak 4:   936.0 Hz  │  Amp:     7594.8    ║
+║ Peak 5:   947.0 Hz  │  Amp:     7184.3    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	398.00 Hz
+ ISSUE (Prio 60): 	FAULT DETECTED! (High Prio 60)
+ DIRECTION (Prio 50): 	STABLE (Constant Speed)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	15404.51
+ Issue Thread Ratio: 		0.80
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   398.0 Hz  │  Amp:    14882.9    ║
+║ Peak 2:  1195.0 Hz  │  Amp:    11730.6    ║
+║ Peak 3:  1205.0 Hz  │  Amp:     9684.2    ║
+║ Peak 4:  2799.0 Hz  │  Amp:     3813.6    ║
+║ Peak 5:  1184.0 Hz  │  Amp:     3637.8    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	312.00 Hz
+ ISSUE (Prio 60): 	FAULT DETECTED! (High Prio 60)
+ DIRECTION (Prio 50): 	STABLE (Constant Speed)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	18546.98
+ Issue Thread Ratio: 		0.84
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   312.0 Hz  │  Amp:    17589.0    ║
+║ Peak 2:   301.0 Hz  │  Amp:     8532.4    ║
+║ Peak 3:   936.0 Hz  │  Amp:     6079.7    ║
+║ Peak 4:   915.0 Hz  │  Amp:     5592.3    ║
+║ Peak 5:   322.0 Hz  │  Amp:     5254.4    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	43.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	STOPPED
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	13487.01
+ Issue Thread Ratio: 		0.09
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   193.0 Hz  │  Amp:    12703.8    ║
+║ Peak 2:    53.0 Hz  │  Amp:    10707.6    ║
+║ Peak 3:    32.0 Hz  │  Amp:     9966.6    ║
+║ Peak 4:   107.0 Hz  │  Amp:     8613.0    ║
+║ Peak 5:   226.0 Hz  │  Amp:     8272.7    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	53.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD (Accelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	18522.14
+ Issue Thread Ratio: 		0.11
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   107.0 Hz  │  Amp:    15838.2    ║
+║ Peak 2:   118.0 Hz  │  Amp:    14182.5    ║
+║ Peak 3:    96.0 Hz  │  Amp:    10954.1    ║
+║ Peak 4:    32.0 Hz  │  Amp:     7869.6    ║
+║ Peak 5:    21.0 Hz  │  Amp:     6673.9    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	258.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	FORWARD (Accelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	14403.84
+ Issue Thread Ratio: 		0.20
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   312.0 Hz  │  Amp:    19984.5    ║
+║ Peak 2:   925.0 Hz  │  Amp:     7697.9    ║
+║ Peak 3:   301.0 Hz  │  Amp:     7581.0    ║
+║ Peak 4:   936.0 Hz  │  Amp:     7580.2    ║
+║ Peak 5:   947.0 Hz  │  Amp:     7241.4    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	398.00 Hz
+ ISSUE (Prio 60): 	FAULT DETECTED! (High Prio 60)
+ DIRECTION (Prio 50): 	STABLE (Constant Speed)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	15367.61
+ Issue Thread Ratio: 		0.81
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   398.0 Hz  │  Amp:    16128.0    ║
+║ Peak 2:  1195.0 Hz  │  Amp:    10747.1    ║
+║ Peak 3:  1205.0 Hz  │  Amp:     9023.1    ║
+║ Peak 4:  2799.0 Hz  │  Amp:     4554.3    ║
+║ Peak 5:  2002.0 Hz  │  Amp:     3380.4    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	333.00 Hz
+ ISSUE (Prio 60): 	FAULT DETECTED! (High Prio 60)
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	11714.85
+ Issue Thread Ratio: 		0.83
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:   333.0 Hz  │  Amp:    10977.8    ║
+║ Peak 2:   322.0 Hz  │  Amp:    10749.6    ║
+║ Peak 3:   979.0 Hz  │  Amp:     6060.5    ║
+║ Peak 4:   312.0 Hz  │  Amp:     5926.1    ║
+║ Peak 5:   990.0 Hz  │  Amp:     5505.3    ║
+╚═══════════════════════════════════════════╝
+
+===========================================
+ REAL-TIME MONITORING SYSTEM (Prio 30)
+===========================================
+ [TASK STATUS]
+ SPEED (Prio 40): 	53.00 Hz
+ ISSUE (Prio 60): 	OK
+ DIRECTION (Prio 50): 	REVERSE (Decelerating)
+===========================================
+ [DEBUG]
+ Speed Thread Max Amplitude: 	14184.20
+ Issue Thread Ratio: 		0.07
+===========================================
+
+
+╔═══════════════════════════════════════════╗
+║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║
+╠═══════════════════════════════════════════╣
+║ Peak 1:    53.0 Hz  │  Amp:    14208.9    ║
+║ Peak 2:   107.0 Hz  │  Amp:     8226.2    ║
+║ Peak 3:   161.0 Hz  │  Amp:     7919.9    ║
+║ Peak 4:   118.0 Hz  │  Amp:     7638.4    ║
+║ Peak 5:   290.0 Hz  │  Amp:     7224.5    ║
+╚═══════════════════════════════════════════╝
+
