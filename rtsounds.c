@@ -41,6 +41,11 @@ volatile float detectedSpeedFrequency = 0.0, maxAmplitudeDetected = 0.0;
 pthread_mutex_t updatedVarMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t updatedVar = PTHREAD_COND_INITIALIZER;
 sem_t data_ready;  // Semaphore for managing data readines
+
+FILE *gantt_logf;  // For Gantt data (gantt_log.csv)
+FILE *status_logf; // For Status reports (rtsounds_log.txt)
+pthread_mutex_t ganttLogMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t statusLogMutex = PTHREAD_MUTEX_INITIALIZER;
 /* *************************
 * Thread Functions
 * *************************/
@@ -71,82 +76,77 @@ void* Audio_thread(void* arg) {
 // rtsounds.c
 
 void* Speed_thread(void* arg) {
-    // N é definido a partir da macro ABUFSIZE_SAMPLES
     const int N = ABUFSIZE_SAMPLES; 
-    
-    // ********************************************
-    // CORREÇÃO: Declaração dos arrays necessários para FFT
-    // (Isto resolve os erros 'x', 'fk' e 'Ak' undeclared)
-    // ********************************************
     complex double x[N]; 
     float fk[N];
     float Ak[N];
-    // ********************************************
-    
-    // NOTA: A linha 'const int SAMP_FREQ = 44100;' FOI REMOVIDA 
-    // (Isto resolve o erro 'expected identifier or ( before numeric constant')
 
-    // 1. Definir o período (e.g., 200 ms)
     struct timespec period = {0, 200000000}; // 200ms
     struct timespec next_wakeup;
 
-    // Inicializar o tempo do próximo despertar (RT)
     clock_gettime(CLOCK_MONOTONIC, &next_wakeup); 
 
     int prio = ((struct sched_param*)arg)->sched_priority; 
     printf("Speed Thread Running - Prio: %d\n", prio);
 
     while (1) {
-        // 2. Definir o próximo tempo de despertar (antes de esperar pelos dados)
         next_wakeup = TsAdd(next_wakeup, period);
 
-        // printf("DEBUG SPEED: Dados recebidos! A processar...\n"); // commented for cleaner output 
+        // --- GANTT: CAPTURE START TIME ---
+        struct timespec start_time, end_time;
+        clock_gettime(CLOCK_MONOTONIC, &start_time);
+        // --- END GANTT ---
+
+        printf("DEBUG SPEED: Dados recebidos! A processar...\n"); 
         
         buffer* readBuffer = cab_getReadBuffer(&cab_buffer); 
 
         if (readBuffer != NULL) {
-            filterLP(COF,SAMP_FREQ,(uint8_t*)readBuffer->buf,N);
-            // 5. Centrar as amostras (AUDIO_U16) e converter para complex double
+            
+            filterLP(COF, SAMP_FREQ, (uint8_t*)readBuffer->buf, N);
+
             for (int k = 0; k < N; k++) {
                 double centered_sample = (double)readBuffer->buf[k] - 32768.0; 
                 x[k] = centered_sample + 0.0 * I;
             }
             
-            // 6. Libertar o buffer 
             cab_releaseReadBuffer(&cab_buffer, readBuffer->index); 
 
-            // 7. Executar FFT
             fftCompute(x, N);
+            fftGetAmplitude(x, N, SAMP_FREQ, fk, Ak);
             
-            // 8. Obter Amplitudes (use runtime device sample rate)
-            fftGetAmplitude(x, N, gReceivedRecordingSpec.freq, fk, Ak); // Chamar a função
-            
-            // 9. Lógica de deteção de velocidade
             float maxA = 0.0;
             float maxF = 0.0;
-            // Add a threshold (e.g., 500.0) to ignore quiet noise
-            // We use the COF define from rtsounds.h
-            // We'll add a little buffer (e.g., 50 Hz) just to be safe.
-            const float MAX_FREQ_TO_CHECK = COF + 50.0; 
+            const float MAX_FREQ_TO_CHECK = COF + 50.0;
 
             for(int k=1; k<=N/2; k++) {
-                // Check if (it's stronger) AND (it's below our max speed frequency)
                 if (Ak[k] > maxA && fk[k] < MAX_FREQ_TO_CHECK) {
                     maxA = Ak[k];
                     maxF = fk[k];
                 }
             }
             
-            // 10. Atualizar RTDB
             pthread_mutex_lock(&updatedVarMutex);
             detectedSpeedFrequency = maxF;
             maxAmplitudeDetected = maxA;
             pthread_mutex_unlock(&updatedVarMutex);
             
-            // printf("DEBUG SPEED: Max Freq=%.2f Hz, Max Amp=%.2f (Loop concluído)\n", maxF, maxA); // commented
+            printf("DEBUG SPEED: Max Freq=%.2f Hz, Max Amp=%.2f (Loop concluído)\n", maxF, maxA);
         }
         
-        // 11. Periodic Wait (Tempo Real Absoluto)
+        // --- GANTT: CAPTURE END TIME & LOG ---
+        clock_gettime(CLOCK_MONOTONIC, &end_time);
+        pthread_mutex_lock(&ganttLogMutex); // Use GANTT mutex
+        gantt_logf = fopen("gantt_log.csv", "a"); // Log to CSV
+        if (gantt_logf) {
+            fprintf(gantt_logf, "GANTT,Speed_thread,%d,%ld,%ld,%ld,%ld\n", 
+                    prio, start_time.tv_sec, start_time.tv_nsec, 
+                    end_time.tv_sec, end_time.tv_nsec);
+            fclose(gantt_logf);
+        }
+        pthread_mutex_unlock(&ganttLogMutex);
+        // --- END GANTT ---
+        
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL); 
     }
     return NULL;
@@ -155,32 +155,27 @@ void* Speed_thread(void* arg) {
 // rtsounds.c
 
 void* Display_thread(void* arg) {
-    struct timespec period = {2, 0}; // 5 seconds (changed from 250ms)
+    struct timespec period = {5, 0}; // 5 seconds
     struct timespec next_wakeup;
     clock_gettime(CLOCK_MONOTONIC, &next_wakeup); 
 
     int prio = ((struct sched_param*)arg)->sched_priority;
     printf("Display Thread Running - Prio: %d, Period: 5s\n", prio);
 
-    // Open log file for appending
-    FILE *logf = fopen("rtsounds_log.txt", "a");
-    if (!logf) {
-        perror("Failed to open log file");
-        logf = NULL;
-    }
-
     while (1) {
-        // Calculate next wakeup time
         next_wakeup = TsAdd(next_wakeup, period);
         
-        // Local variables to store RTDB state
+        // --- GANTT: CAPTURE START TIME ---
+        struct timespec start_time, end_time;
+        clock_gettime(CLOCK_MONOTONIC, &start_time);
+        // --- END GANTT ---
+
         float speedFreq = 0.0;
         float maxAmp = 0.0;
         int isIssue = 0;
         int direction = 0; 
         float issueR = 0.0;
 
-        // Read from RTDB with mutex protection
         pthread_mutex_lock(&updatedVarMutex);
         speedFreq = detectedSpeedFrequency;
         maxAmp = maxAmplitudeDetected;
@@ -189,16 +184,13 @@ void* Display_thread(void* arg) {
         issueR = issueRatio;
         pthread_mutex_unlock(&updatedVarMutex);
 
-        // Display results
-        system("clear"); 
-
-        // Convert numeric values to strings for display
         const char *issueStatus = isIssue ? "FAULT DETECTED! (High Prio 60)" : "OK";
         const char *dirStatus = (direction == 1) ? "FORWARD (Accelerating)" : 
                                 (direction == -1) ? "REVERSE (Decelerating)" : 
                                 (direction == 2) ? "STABLE (Constant Speed)" :
                                 "STOPPED";
         
+        // --- Print to Console ---
         printf("===========================================\n");
         printf(" REAL-TIME MONITORING SYSTEM (Prio %d)\n", prio);
         printf("===========================================\n");
@@ -210,51 +202,43 @@ void* Display_thread(void* arg) {
         printf(" [DEBUG]\n");
         printf(" Speed Thread Max Amplitude: \t%.2f\n", maxAmp);
         printf(" Issue Thread Ratio: \t\t%.2f\n", issueR); 
-        printf("===========================================\n");
-        printf(" [INFO] Display updates every 5 seconds\n");
-        printf("===========================================\n");
+        printf("===========================================\n\n");
 
-        // Also write to log file
-        if (logf) {
-            fprintf(logf, "===========================================\n");
-            fprintf(logf, " REAL-TIME MONITORING SYSTEM (Prio %d)\n", prio);
-            fprintf(logf, "===========================================\n");
-            fprintf(logf, " [TASK STATUS]\n");
-            fprintf(logf, " SPEED (Prio 40): \t%.2f Hz\n", speedFreq);
-            fprintf(logf, " ISSUE (Prio 60): \t%s\n", issueStatus);
-            fprintf(logf, " DIRECTION (Prio 50): \t%s\n", dirStatus);
-            fprintf(logf, "===========================================\n");
-            fprintf(logf, " [DEBUG]\n");
-            fprintf(logf, " Speed Thread Max Amplitude: \t%.2f\n", maxAmp);
-            fprintf(logf, " Issue Thread Ratio: \t\t%.2f\n", issueR); 
-            fprintf(logf, "===========================================\n\n");
-            fflush(logf);
+        // --- Print to Status Log File (rtsounds_log.txt) ---
+        pthread_mutex_lock(&statusLogMutex);
+        status_logf = fopen("rtsounds_log.txt", "a");
+        if (status_logf) {
+            fprintf(status_logf, "===========================================\n");
+            fprintf(status_logf, " REAL-TIME MONITORING SYSTEM (Prio %d)\n", prio);
+            fprintf(status_logf, "===========================================\n");
+            fprintf(status_logf, " [TASK STATUS]\n");
+            fprintf(status_logf, " SPEED (Prio 40): \t%.2f Hz\n", speedFreq);
+            fprintf(status_logf, " ISSUE (Prio 60): \t%s\n", issueStatus);
+            fprintf(status_logf, " DIRECTION (Prio 50): \t%s\n", dirStatus);
+            fprintf(status_logf, "===========================================\n");
+            fprintf(status_logf, " [DEBUG]\n");
+            fprintf(status_logf, " Speed Thread Max Amplitude: \t%.2f\n", maxAmp);
+            fprintf(status_logf, " Issue Thread Ratio: \t\t%.2f\n", issueR); 
+            fprintf(status_logf, "===========================================\n\n");
+            fflush(status_logf);
+            fclose(status_logf);
         }
+        pthread_mutex_unlock(&statusLogMutex);
+        // --- End Status Log ---
 
-        // Check for dump trigger file (create /tmp/rtsounds_dump to request a WAV dump)
-        FILE *tf = fopen("/tmp/rtsounds_dump", "r");
-        if (tf) {
-            fclose(tf);
-            // remove trigger file
-            remove("/tmp/rtsounds_dump");
-
-            // create timestamped filename
-            char fname[256];
-            time_t t = time(NULL);
-            struct tm tm;
-            localtime_r(&t, &tm);
-            snprintf(fname, sizeof(fname), "captured_%04d%02d%02d_%02d%02d%02d.wav",
-                     tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-                     tm.tm_hour, tm.tm_min, tm.tm_sec);
-
-            dumpCapturedBufferToWav(fname);  // call top-level helper
-            if (logf) {
-                fprintf(logf, "[INFO] Captured buffer dumped to %s\n\n", fname);
-                fflush(logf);
-            }
+        // --- GANTT: CAPTURE END TIME & LOG ---
+        clock_gettime(CLOCK_MONOTONIC, &end_time);
+        pthread_mutex_lock(&ganttLogMutex); // Use GANTT mutex
+        gantt_logf = fopen("gantt_log.csv", "a"); // Log to CSV
+        if (gantt_logf) {
+            fprintf(gantt_logf, "GANTT,Display_thread,%d,%ld,%ld,%ld,%ld\n", 
+                    prio, start_time.tv_sec, start_time.tv_nsec, 
+                    end_time.tv_sec, end_time.tv_nsec);
+            fclose(gantt_logf);
         }
+        pthread_mutex_unlock(&ganttLogMutex);
+        // --- END GANTT ---
 
-        // Periodic wait (Real-Time)
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL); 
     }
     return NULL;
@@ -273,14 +257,12 @@ void* Display_thread(void* arg) {
 
 void* Issue_thread(void* arg) {
     const int N = ABUFSIZE_SAMPLES; 
-    const int ISSUE_FREQ_THRESHOLD = 2000; // Analisar picos acima de 2 kHz
+    const int ISSUE_FREQ_THRESHOLD = 2000; 
     
-    // Variáveis locais para FFT (necessárias para evitar erros de compilação)
     complex double x[N]; 
     float fk[N];
     float Ak[N];
     
-    // 1. Definir o período (1 segundo)
     struct timespec period = {1, 0}; // 1.0 s
     struct timespec next_wakeup;
     clock_gettime(CLOCK_MONOTONIC, &next_wakeup); 
@@ -289,63 +271,68 @@ void* Issue_thread(void* arg) {
     printf("Issue Thread Running - Prio: %d\n", prio);
 
     while (1) {
-        // 2. Definir o próximo tempo de despertar (periodicidade RT)
         next_wakeup = TsAdd(next_wakeup, period);
         
-        // 3. Obter o buffer de leitura do CAB
+        // --- GANTT: CAPTURE START TIME ---
+        struct timespec start_time, end_time;
+        clock_gettime(CLOCK_MONOTONIC, &start_time);
+        // --- END GANTT ---
+
         buffer* readBuffer = cab_getReadBuffer(&cab_buffer); 
 
         if (readBuffer != NULL) {
             
-            // 4. Preparar dados para FFT (centrar amostras)
             for (int k = 0; k < N; k++) {
                 double centered_sample = (double)readBuffer->buf[k] - 32768.0; 
                 x[k] = centered_sample + 0.0 * I;
             }
             
-            // 5. Libertar o buffer para escrita
             cab_releaseReadBuffer(&cab_buffer, readBuffer->index); 
 
-            // 6. Executar FFT e obter Amplitudes
             fftCompute(x, N);
-            fftGetAmplitude(x, N, gReceivedRecordingSpec.freq, fk, Ak);
+            fftGetAmplitude(x, N, SAMP_FREQ, fk, Ak);
             
-            // 7. LÓGICA DE DETEÇÃO DE FALHAS
             float maxHighFreqAmp = 0.0;
             float maxSpeedAmp = 0.0; 
             float currentIssueFreq = 0.0;
 
-            // Encontrar o pico de amplitude (Falha) em alta frequência
             for (int k = 1; k <= N/2; k++) {
                 if (fk[k] >= ISSUE_FREQ_THRESHOLD && Ak[k] > maxHighFreqAmp) {
                     maxHighFreqAmp = Ak[k];
                     currentIssueFreq = fk[k];
                 }
-                // Encontrar o pico na zona de baixa frequência (Velocidade) para o rácio
                 if (fk[k] < ISSUE_FREQ_THRESHOLD && Ak[k] > maxSpeedAmp) {
                     maxSpeedAmp = Ak[k];
                 }
             }
             
-            // 8. Calcular o Rácio e Determinar a Falha
             float ratio = (maxSpeedAmp > 0) ? (maxHighFreqAmp / maxSpeedAmp) : 0.0;
-            // Critério de Falha: Pico de alta frequência ser significativo (> 10k) E
-            // ter um rácio considerável (> 20%) em relação ao pico de velocidade.
-            int issueFound = (ratio > 0.20 && maxHighFreqAmp > 10000.0); 
+            int issueFound = (ratio > 0.15 && maxHighFreqAmp > 8000.0); 
 
-            // 9. Atualizar o RTDB (acesso exclusivo com Mutex)
             pthread_mutex_lock(&updatedVarMutex);
             detectedIssueFrequency = currentIssueFreq;
             issueRatio = ratio;
             issueDetected = issueFound;
             pthread_mutex_unlock(&updatedVarMutex);
             
-            // printf("DEBUG ISSUE (Prio %d): High Amp=%.2f, Ratio=%.2f (Falha: %s)\n", prio, maxHighFreqAmp, ratio, issueFound ? "SIM" : "NÃO"); // commented
+            printf("DEBUG ISSUE (Prio %d): High Amp=%.2f, Ratio=%.2f (Falha: %s)\n", prio, maxHighFreqAmp, ratio, issueFound ? "SIM" : "NÃO");
         } else {
-            // printf("DEBUG ISSUE (Prio %d): Sem buffer disponível, ignorando ciclo.\n", prio); // commented
+            printf("DEBUG ISSUE (Prio %d): Sem buffer disponível, ignorando ciclo.\n", prio);
         }
         
-        // 10. Espera Periódica (Tempo Real Absoluto)
+        // --- GANTT: CAPTURE END TIME & LOG ---
+        clock_gettime(CLOCK_MONOTONIC, &end_time);
+        pthread_mutex_lock(&ganttLogMutex); // Use GANTT mutex
+        gantt_logf = fopen("gantt_log.csv", "a"); // Log to CSV
+        if (gantt_logf) {
+            fprintf(gantt_logf, "GANTT,Issue_thread,%d,%ld,%ld,%ld,%ld\n", 
+                    prio, start_time.tv_sec, start_time.tv_nsec, 
+                    end_time.tv_sec, end_time.tv_nsec);
+            fclose(gantt_logf);
+        }
+        pthread_mutex_unlock(&ganttLogMutex);
+        // --- END GANTT ---
+
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL); 
     }
     return NULL;
@@ -357,7 +344,6 @@ void* Issue_thread(void* arg) {
 void* Direction_thread(void* arg) {
     const int N = ABUFSIZE_SAMPLES; 
     
-    // 1. Define period (500 ms)
     struct timespec period = {0, 500000000}; 
     struct timespec next_wakeup;
     clock_gettime(CLOCK_MONOTONIC, &next_wakeup); 
@@ -365,20 +351,22 @@ void* Direction_thread(void* arg) {
     int prio = ((struct sched_param*)arg)->sched_priority;
     printf("Direction Thread Running - Prio: %d\n", prio);
 
-    // Simple state tracking
     float prevSpeed = 0.0f;
     float prevAmp = 0.0f;
     
-    // Thresholds for decision making
-    const float MIN_SPEED_RUNNING = 50.0f;      // Hz - below this is "stopped"
-    const float ACCEL_THRESHOLD = 20.0f;        // Hz - significant speed increase
-    const float DECEL_THRESHOLD = 20.0f;        // Hz - significant speed decrease
-    const float STABLE_THRESHOLD = 10.0f;       // Hz - within this range is "stable"
+    const float MIN_SPEED_RUNNING = 50.0f;
+    const float ACCEL_THRESHOLD = 20.0f;
+    const float DECEL_THRESHOLD = 20.0f;
+    const float STABLE_THRESHOLD = 10.0f;
 
     while (1) {
         next_wakeup = TsAdd(next_wakeup, period);
 
-        // Read current values from RTDB
+        // --- GANTT: CAPTURE START TIME ---
+        struct timespec start_time, end_time;
+        clock_gettime(CLOCK_MONOTONIC, &start_time);
+        // --- END GANTT ---
+
         float currentSpeed = 0.0f;
         float currentAmp = 0.0f;
 
@@ -387,48 +375,51 @@ void* Direction_thread(void* arg) {
         currentAmp = maxAmplitudeDetected;
         pthread_mutex_unlock(&updatedVarMutex);
 
-        // Calculate changes
         float speedDelta = currentSpeed - prevSpeed;
         
-        // Determine direction/state
-        int newDirection = 0;  // Default: STOPPED
+        int newDirection = 0;  
         
         if (currentSpeed < MIN_SPEED_RUNNING) {
-            // Motor is stopped or very slow
-            newDirection = 0;  // STOPPED
+            newDirection = 0;
         } 
         else if (speedDelta > ACCEL_THRESHOLD) {
-            // Significant speed increase = accelerating forward
-            newDirection = 1;  // FORWARD (accelerating)
+            newDirection = 1;
         } 
         else if (speedDelta < -DECEL_THRESHOLD) {
-            // Significant speed decrease = decelerating/braking
-            newDirection = -1;  // REVERSE (decelerating)
+            newDirection = -1;
         } 
         else if (fabs(speedDelta) <= STABLE_THRESHOLD && currentSpeed >= MIN_SPEED_RUNNING) {
-            // Speed is relatively stable and motor is running
-            newDirection = 2;  // STABLE (constant speed)
+            newDirection = 2;
         }
 
-        // Update RTDB
         pthread_mutex_lock(&updatedVarMutex);
         directionValue = newDirection;
         directionValues.lastFrequency = currentSpeed;
         directionValues.lastAmplitude = currentAmp;
         pthread_mutex_unlock(&updatedVarMutex);
 
-        // Update state for next iteration
         prevSpeed = currentSpeed;
         prevAmp = currentAmp;
 
-        // Debug output
         const char *dirStr = (newDirection == 1) ? "ACCEL" : 
                             (newDirection == -1) ? "DECEL" : 
                             (currentSpeed < MIN_SPEED_RUNNING) ? "STOP" : "STABLE";
         
-        // printf("DEBUG DIRECTION (Prio %d): Freq=%.2f (Δ=%.2f), Dir=%d [Prop=%d, Conf=%d/%d, Stable=%d]\n",
-        //        prio, currentSpeedFreq, dSpeed, actualDirection, 
-        //        proposedDirection, confidence_counter, confidence_required, stable_cycles); // commented
+        printf("DEBUG DIRECTION (Prio %d): Speed=%.1f Hz (Δ=%.1f), State=%s\n",
+               prio, currentSpeed, speedDelta, dirStr);
+
+        // --- GANTT: CAPTURE END TIME & LOG ---
+        clock_gettime(CLOCK_MONOTONIC, &end_time);
+        pthread_mutex_lock(&ganttLogMutex); // Use GANTT mutex
+        gantt_logf = fopen("gantt_log.csv", "a"); // Log to CSV
+        if (gantt_logf) {
+            fprintf(gantt_logf, "GANTT,Direction_thread,%d,%ld,%ld,%ld,%ld\n", 
+                    prio, start_time.tv_sec, start_time.tv_nsec, 
+                    end_time.tv_sec, end_time.tv_nsec);
+            fclose(gantt_logf);
+        }
+        pthread_mutex_unlock(&ganttLogMutex);
+        // --- END GANTT ---
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL);
     }
@@ -436,13 +427,11 @@ void* Direction_thread(void* arg) {
 }
 // **************** Lógica da Thread 6: FFT (ou 6ª Thread) ****************
 void* FFT_thread(void* arg) {
-    // Declare arrays for FFT processing
-    const int N = ABUFSIZE_SAMPLES;  // 4096 samples
-    complex double x[N];              // Input samples as complex numbers
-    float fk[N];                      // Frequency bins (Hz)
-    float Ak[N];                      // Amplitude at each frequency
+    const int N = ABUFSIZE_SAMPLES;
+    complex double x[N];
+    float fk[N];
+    float Ak[N];
     
-    // Set period to 2 seconds (low priority, just for monitoring/logging)
     struct timespec period = {2, 0}; 
     struct timespec next_wakeup;
     clock_gettime(CLOCK_MONOTONIC, &next_wakeup);
@@ -450,22 +439,18 @@ void* FFT_thread(void* arg) {
     int prio = ((struct sched_param*)arg)->sched_priority;
     printf("FFT Spectral Analysis Thread Running - Prio: %d\n", prio);
 
-    // Open log file for appending
-    FILE *logf = fopen("rtsounds_log.txt", "a");
-    if (!logf) {
-        perror("Failed to open log file");
-        logf = NULL;
-    }
-
     while (1) {
-        // Calculate next wakeup time
         next_wakeup = TsAdd(next_wakeup, period);
         
-        // Get the latest buffer from CAB
+        // --- GANTT: CAPTURE START TIME ---
+        struct timespec start_time, end_time;
+        clock_gettime(CLOCK_MONOTONIC, &start_time);
+        // --- END GANTT ---
+
         buffer* readBuffer = cab_getReadBuffer(&cab_buffer);
         
         if (readBuffer != NULL) {
-            // printf("DEBUG FFT: Processing buffer %d for spectral analysis\n", readBuffer->index); // commented
+            printf("DEBUG FFT: Processing buffer %d for spectral analysis\n", readBuffer->index);
 
             for (int k = 0; k < N; k++) {
                 double centered_sample = (double)readBuffer->buf[k] - 32768.0;
@@ -474,16 +459,19 @@ void* FFT_thread(void* arg) {
             cab_releaseReadBuffer(&cab_buffer, readBuffer->index);
 
             fftCompute(x, N);
-            fftGetAmplitude(x, N, gReceivedRecordingSpec.freq, fk, Ak);
+            fftGetAmplitude(x, N, SAMP_FREQ, fk, Ak);
+
+            // --- Print to Console AND Status Log ---
+            pthread_mutex_lock(&statusLogMutex);
+            status_logf = fopen("rtsounds_log.txt", "a");
 
             printf("\n╔═══════════════════════════════════════════╗\n");
             printf("║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║\n");
             printf("╠═══════════════════════════════════════════╣\n");
-
-            if (logf) {
-                fprintf(logf, "\n╔═══════════════════════════════════════════╗\n");
-                fprintf(logf, "║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║\n");
-                fprintf(logf, "╠═══════════════════════════════════════════╣\n");
+            if (status_logf) {
+                fprintf(status_logf, "\n╔═══════════════════════════════════════════╗\n");
+                fprintf(status_logf, "║   SPECTRAL ANALYSIS (Top 5 Peaks)        ║\n");
+                fprintf(status_logf, "╠═══════════════════════════════════════════╣\n");
             }
 
             float Ak_copy[N/2 + 1];
@@ -501,30 +489,44 @@ void* FFT_thread(void* arg) {
                 }
                 if (maxA > 100.0) {
                     printf("║ Peak %d: %7.1f Hz  │  Amp: %10.1f    ║\n", p + 1, fk[maxIdx], maxA);
-                    if (logf) fprintf(logf, "║ Peak %d: %7.1f Hz  │  Amp: %10.1f    ║\n", p + 1, fk[maxIdx], maxA);
+                    if (status_logf) fprintf(status_logf, "║ Peak %d: %7.1f Hz  │  Amp: %10.1f    ║\n", p + 1, fk[maxIdx], maxA);
                     peaks_found++;
                 }
                 Ak_copy[maxIdx] = 0.0;
             }
             if (peaks_found == 0) {
                 printf("║ No significant peaks detected (all < 100) ║\n");
-                if (logf) fprintf(logf, "║ No significant peaks detected (all < 100) ║\n");
+                if (status_logf) fprintf(status_logf, "║ No significant peaks detected (all < 100) ║\n");
             }
+            
             printf("╚═══════════════════════════════════════════╝\n\n");
-            if (logf) {
-                fprintf(logf, "╚═══════════════════════════════════════════╝\n\n");
-                fflush(logf);
+            if (status_logf) {
+                fprintf(status_logf, "╚═══════════════════════════════════════════╝\n\n");
+                fflush(status_logf);
+                fclose(status_logf);
             }
+            pthread_mutex_unlock(&statusLogMutex);
+            // --- End Status Log ---
+
         } else {
-            // printf("DEBUG FFT: No buffer available for spectral analysis\n"); // commented
-            if (logf) {
-                // fprintf(logf, "DEBUG FFT: No buffer available for spectral analysis\n"); // commented
-                // fflush(logf);
-            }
+            printf("DEBUG FFT: No buffer available for spectral analysis\n");
         }
+
+        // --- GANTT: CAPTURE END TIME & LOG ---
+        clock_gettime(CLOCK_MONOTONIC, &end_time);
+        pthread_mutex_lock(&ganttLogMutex); // Use GANTT mutex
+        gantt_logf = fopen("gantt_log.csv", "a"); // Log to CSV
+        if (gantt_logf) {
+            fprintf(gantt_logf, "GANTT,FFT_thread,%d,%ld,%ld,%ld,%ld\n", 
+                    prio, start_time.tv_sec, start_time.tv_nsec, 
+                    end_time.tv_sec, end_time.tv_nsec);
+            fclose(gantt_logf);
+        }
+        pthread_mutex_unlock(&ganttLogMutex);
+        // --- END GANTT ---
+
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL);
     }
-    // fclose(logf); // unreachable, but good practice if you ever break the loop
     return NULL;
 }
 
@@ -535,12 +537,35 @@ void* Preprocessing_thread(void* arg) {
     clock_gettime(CLOCK_MONOTONIC, &next_wakeup);
 
     int prio = ((struct sched_param*)arg)->sched_priority;
-    printf("Preprocessing Thread (LP Filter) Running - Prio: %d\n", prio);
+    printf("Preprocessing Thread (Disabled) Running - Prio: %d\n", prio);
 
     while (1) {
-        SDL_Delay(5000); // Small delay to prevent busy waiting
-    return NULL;
+        next_wakeup = TsAdd(next_wakeup, period);
+
+        // --- GANTT: CAPTURE START TIME ---
+        struct timespec start_time, end_time;
+        clock_gettime(CLOCK_MONOTONIC, &start_time);
+        // --- END GANTT ---
+
+        // This thread is disabled.
+        // We log its start and end time around the sleep.
+
+        // --- GANTT: CAPTURE END TIME & LOG ---
+        clock_gettime(CLOCK_MONOTONIC, &end_time);
+        pthread_mutex_lock(&ganttLogMutex); // Use GANTT mutex
+        gantt_logf = fopen("gantt_log.csv", "a"); // Log to CSV
+        if (gantt_logf) {
+            fprintf(gantt_logf, "GANTT,Preproc_thread,%d,%ld,%ld,%ld,%ld\n", 
+                    prio, start_time.tv_sec, start_time.tv_nsec, 
+                    end_time.tv_sec, end_time.tv_nsec);
+            fclose(gantt_logf);
+        }
+        pthread_mutex_unlock(&ganttLogMutex);
+        // --- END GANTT ---
+
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_wakeup, NULL);
     }
+    return NULL;
 }
 
 /* *************************
@@ -680,8 +705,26 @@ int main(int argc, char *argv[]) {
         printf("Buffer %d: nusers=%d\n", i, cab_buffer.buflist[i].nusers);
     }
 
-    // Add semaphore initialization here
+    // semaphore initialization 
     sem_init(&data_ready, 0, 0);
+
+    // Clear Gantt Log and write CSV header
+    gantt_logf = fopen("gantt_log.csv", "w");
+    if (gantt_logf) {
+        fprintf(gantt_logf, "# TaskName,Priority,StartSec,StartNsec,EndSec,EndNsec\n");
+        fclose(gantt_logf);
+    } else {
+        perror("Failed to open gantt_log.csv for writing");
+    }
+
+    // Clear Status Log
+    status_logf = fopen("rtsounds_log.txt", "w");
+    if (status_logf) {
+        fprintf(status_logf, "RTSounds Log Initialized.\n\n");
+        fclose(status_logf);
+    } else {
+        perror("Failed to open rtsounds_log.txt for writing");
+    }
 
     // Set up signal handlers
     signal(SIGINT, handle_signal);
@@ -820,27 +863,31 @@ void init_cab(cab *cab_obj) {
 }
 
 void audioRecordingCallback(void* userdata, Uint8* stream, int len) {
-    // 1. Obter o buffer de escrita do cab_buffer global
+    // --- GANTT: CAPTURE START TIME ---
+    struct timespec start_time, end_time;
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+    // --- END GANTT ---
+
     buffer* writeBuffer = cab_getWriteBuffer(&cab_buffer);
     
-    if (writeBuffer != NULL) {
-        // Copy at most the size of the CAB buffer to avoid overflow.
-        size_t bufSizeBytes = sizeof(writeBuffer->buf); // bytes available in cab buffer
-        size_t copyLen = (size_t)len;
-        if (copyLen > bufSizeBytes) copyLen = bufSizeBytes;
-        
-        // Copy the received bytes into the CAB buffer (caller must interpret format)
-        memcpy(writeBuffer->buf, stream, copyLen);
-
-        // 3. Libertar o buffer de escrita, sinalizando que está pronto para leitura
+    if (writeBuffer != NULL && len == BUF_SIZE * sizeof(uint16_t)) {
+        memcpy(writeBuffer->buf, stream, len);
         cab_releaseWriteBuffer(&cab_buffer, writeBuffer->index);
-
-        // 4. Sinalizar às threads consumidoras (como a Speed_thread) que há dados prontos
         sem_post(&data_ready);
     }
     
-    // *OPCIONAL: Lógica original do gRecordingBuffer (gravação longa) deve ser removida ou desativada
-    // Se o dispositivo estiver aberto, o callback vai continuar a ser chamado de forma contínua.
+    // --- GANTT: CAPTURE END TIME & LOG ---
+    clock_gettime(CLOCK_MONOTONIC, &end_time);
+    pthread_mutex_lock(&ganttLogMutex); // Use GANTT mutex
+    gantt_logf = fopen("gantt_log.csv", "a"); // Log to CSV
+    if (gantt_logf) {
+        fprintf(gantt_logf, "GANTT,AudioCallback,%d,%ld,%ld,%ld,%ld\n", 
+                99, start_time.tv_sec, start_time.tv_nsec, 
+                end_time.tv_sec, end_time.tv_nsec);
+        fclose(gantt_logf);
+    }
+    pthread_mutex_unlock(&ganttLogMutex);
+    // --- END GANTT ---
 }
 
 
