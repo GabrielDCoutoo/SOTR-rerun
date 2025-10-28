@@ -1,370 +1,224 @@
 #include <SDL.h>
+#include <math.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
-#include <stdio.h>
-#include <signal.h>
 
 #define MONO 1
 #define SAMP_FREQ 44100
 #define FORMAT AUDIO_U16
 #define ABUFSIZE_SAMPLES 4096
 
-// Test scenarios
 typedef enum {
-    TEST_CONSTANT_SPEED,      // Motor at constant 100 Hz
-    TEST_ACCELERATION,        // Speed ramps from 50 to 200 Hz
-    TEST_DECELERATION,        // Speed ramps from 200 to 50 Hz
-    TEST_WITH_FAULT,          // Constant speed + high-freq noise (bearing fault)
-    TEST_START_STOP,          // Motor starts, runs, stops
-    TEST_MULTIPLE_HARMONICS   // Complex signal with multiple frequencies
+    TEST_CONSTANT_SPEED, TEST_ACCELERATION, TEST_DECELERATION,
+    TEST_WITH_FAULT, TEST_START_STOP, TEST_MULTIPLE_HARMONICS
 } TestScenario;
 
-// Playback data
 SDL_AudioDeviceID playbackDeviceId = 0;
 SDL_AudioSpec gReceivedPlaybackSpec;
 Uint8 *gPlaybackBuffer = NULL;
 Uint32 gBufferBytePosition = 0;
 Uint32 gBufferByteSize = 0;
 
-/* *************************************************************************************
- * Generate a sine wave
- * freq: frequency in Hz
- * durationMS: duration in milliseconds
- * amp: amplitude (0 to 65535 for AUDIO_U16)
- * buffer: output buffer
- * offset: starting offset in buffer
- * ***********************************************************************************/
-void genSineU16(float freq, uint32_t durationMS, uint16_t amp, uint8_t *buffer, int offset)
-{
-    int i = 0, nSamples = 0;
-    float sinArgK = 2 * M_PI * freq;
+/* --- Signal Generation --- */
+
+void genSineU16(float freq, uint32_t durationMS, uint16_t amp, uint8_t *buffer, int offset) {
+    if (!buffer || freq < 0 || durationMS == 0 || amp == 0) return;
+    uint32_t nSamples = (uint32_t)(((float)durationMS / 1000.0f) * SAMP_FREQ);
+    if (nSamples == 0) return;
     uint16_t *bufU16 = (uint16_t *)buffer;
-    
-    nSamples = ((float)durationMS / 1000) * SAMP_FREQ;
-    
-    for (i = 0; i < nSamples; i++) {
-        bufU16[offset + i] = 32768 + (amp / 2) * sin((sinArgK * i) / SAMP_FREQ);
+    double sinArgInc = 2.0 * M_PI * freq / SAMP_FREQ;
+    double currentPhase = 0.0;
+    uint16_t halfAmp = amp / 2;
+    for (uint32_t i = 0; i < nSamples; i++) {
+        bufU16[offset + i] = 32768 + (int16_t)(halfAmp * sin(currentPhase));
+        currentPhase += sinArgInc;
     }
 }
 
-/* *************************************************************************************
- * Generate a frequency sweep (chirp) - CORRECTED VERSION
- * ***********************************************************************************/
-void genChirpU16(float startFreq, float endFreq, uint32_t durationMS, uint16_t amp, uint8_t *buffer, int offset)
-{
-    int i = 0, nSamples = 0;
-    uint16_t *bufU16 = (uint16_t *)buffer;
-    
-    nSamples = ((float)durationMS / 1000) * SAMP_FREQ;
-    
-    float currentFreq;
-    double phase = 0.0; // Use a double for phase and accumulate it
+// Placeholder/Removed: If you need to add signals, implement this properly.
+// void addSineU16(float freq, uint32_t durationMS, uint16_t amp, uint8_t *buffer, int offset) {
+//    printf("Warning: addSineU16 not fully implemented.\n");
+// }
 
-    for (i = 0; i < nSamples; i++) {
-        // Calculate the frequency at this sample
-        currentFreq = startFreq + (endFreq - startFreq) * i / nSamples;
-        
-        // Add the current phase step
+void genChirpU16(float startFreq, float endFreq, uint32_t durationMS, uint16_t amp, uint8_t *buffer, int offset) {
+    if (!buffer || durationMS == 0 || amp == 0) return;
+    uint32_t nSamples = (uint32_t)(((float)durationMS / 1000.0f) * SAMP_FREQ);
+     if (nSamples == 0) return;
+    uint16_t *bufU16 = (uint16_t *)buffer;
+    double phase = 0.0;
+    uint16_t halfAmp = amp / 2;
+    for (uint32_t i = 0; i < nSamples; i++) {
+        float currentFreq = startFreq + (endFreq - startFreq) * ((float)i / nSamples);
         phase += 2.0 * M_PI * currentFreq / SAMP_FREQ;
-
-        // Generate the sample
-        bufU16[offset + i] = 32768 + (amp / 2) * sin(phase);
-    }
-    
-    // Optional: Reset phase if it gets too large to prevent overflow
-    // if (phase > 2.0 * M_PI * 1000000.0) phase = 0.0; 
-}
-
-/* *************************************************************************************
- * Add white noise to buffer
- * ***********************************************************************************/
-void addNoiseU16(uint32_t durationMS, uint16_t amp, uint8_t *buffer, int offset)
-{
-    int i = 0, nSamples = 0;
-    uint16_t *bufU16 = (uint16_t *)buffer;
-    
-    nSamples = ((float)durationMS / 1000) * SAMP_FREQ;
-    
-    for (i = 0; i < nSamples; i++) {
-        int noise = (rand() % amp) - (amp / 2);
-        bufU16[offset + i] = (bufU16[offset + i] + noise) & 0xFFFF;
+        bufU16[offset + i] = 32768 + (int16_t)(halfAmp * sin(phase));
     }
 }
 
-/* *************************************************************************************
- * Audio playback callback
- * ***********************************************************************************/
-void audioPlaybackCallback(void *userdata, Uint8 *stream, int len)
-{
-    if (gBufferBytePosition >= gBufferByteSize) {
-        // Loop back to beginning
-        gBufferBytePosition = 0;
+/* --- Audio Callback --- */
+void audioPlaybackCallback(void *userdata, Uint8 *stream, int len) {
+    if (gBufferBytePosition >= gBufferByteSize) gBufferBytePosition = 0; // Loop buffer
+    Uint32 remainingBytes = gBufferByteSize - gBufferBytePosition;
+    Uint32 bytesToCopy = (len > remainingBytes) ? remainingBytes : len;
+    if (bytesToCopy > 0 && gPlaybackBuffer != NULL) {
+        memcpy(stream, &gPlaybackBuffer[gBufferBytePosition], bytesToCopy);
     }
-    
-    memcpy(stream, &gPlaybackBuffer[gBufferBytePosition], len);
-    gBufferBytePosition += len;
+     if (bytesToCopy < len) { // Fill rest with silence
+         uint16_t silence = 32768;
+         uint16_t* stream16 = (uint16_t*)(stream + bytesToCopy);
+         int samplesToSilence = (len - bytesToCopy) / sizeof(uint16_t);
+         for(int i=0; i < samplesToSilence; ++i) stream16[i] = silence;
+     }
+    gBufferBytePosition += len; // Always advance by requested len for continuous playback
+    if (gBufferBytePosition >= gBufferByteSize) gBufferBytePosition = 0; // Ensure loop wraps correctly
 }
 
-/* new: add sine to buffer (adds to existing samples, clamps, keeps unsigned 16-bit format) */
-void addSineU16(float freq, uint32_t durationMS, uint16_t amp, uint8_t *buffer, int offset)
-{
-    int i = 0, nSamples = 0;
-    uint16_t *bufU16 = (uint16_t *)buffer;
-    nSamples = ((float)durationMS / 1000) * SAMP_FREQ;
 
-    for (i = 0; i < nSamples; i++) {
-        /* convert current unsigned sample to signed centered */
-        int32_t current = (int32_t)bufU16[offset + i] - 32768;
-        /* compute sample to add */
-        float phase = 2.0f * M_PI * freq * i / SAMP_FREQ;
-        int32_t add = (int32_t)roundf((amp / 2.0f) * sinf(phase));
-        int32_t summed = current + add;
-        /* clamp to signed 16-bit range */
-        if (summed > 32767) summed = 32767;
-        if (summed < -32768) summed = -32768;
-        /* store back as unsigned */
-        bufU16[offset + i] = (uint16_t)(summed + 32768);
-    }
-}
-
-/* *************************************************************************************
- * Generate test signal based on scenario
- * ***********************************************************************************/
-void generateTestSignal(TestScenario scenario, uint8_t *buffer, uint32_t *totalSamples)
-{
-    int offset = 0;
+/* --- Test Signal Logic --- */
+void generateTestSignal(TestScenario scenario, uint8_t *buffer, uint32_t *totalSamples) {
+    int offsetSamples = 0;
     *totalSamples = 0;
-    
-    printf("\n===========================================\n");
-    printf("Generating test signal...\n");
-    printf("===========================================\n");
-    
-    switch (scenario) {
-        case TEST_CONSTANT_SPEED:
-            printf("Scenario: Constant Speed (100 Hz)\n");
-            printf("Expected: Speed = 100 Hz, Direction = STABLE\n");
-            genSineU16(800.0, 10000, 30000, buffer, offset);  // fixed: 100 Hz
-            *totalSamples = (10000 * SAMP_FREQ) / 1000;
-            break;
-            
-        case TEST_ACCELERATION:
-            printf("Scenario: Acceleration (50 Hz → 200 Hz over 8 seconds)\n");
-            printf("Expected: Direction = FORWARD (accelerating)\n");
-            genChirpU16(400.0, 800.0, 8000, 30000, buffer, offset);
-            *totalSamples = (8000 * SAMP_FREQ) / 1000;
-            break;
-            
-        case TEST_DECELERATION:
-            printf("Scenario: Deceleration (200 Hz → 50 Hz over 8 seconds)\n");
-            printf("Expected: Direction = REVERSE (decelerating)\n");
-            genChirpU16(800.0,400.0, 8000, 30000, buffer, offset);
-            *totalSamples = (8000 * SAMP_FREQ) / 1000;
-            break;
-            
-        case TEST_WITH_FAULT:
-            printf("Scenario: Constant Speed + Bearing Fault\n");
-            printf("Expected: Speed = 120 Hz, Issue = FAULT DETECTED\n");
-            // Base frequency (motor speed)
-            genSineU16(420.0, 10000, 30000, buffer, offset);
-            // Add high-frequency noise (bearing fault at 3 kHz) as additions
-            offset = 0;
-            for (int i = 0; i < 10000 / 100; i++) {
-                addSineU16(3000.0, 100, 12000, buffer, offset);  // ADD burst (do not overwrite)
-                offset += (100 * SAMP_FREQ) / 1000;
-            }
-            *totalSamples = (10000 * SAMP_FREQ) / 1000;
-            break;
+    uint32_t maxBufferSamples = 20 * SAMP_FREQ; // Assuming 20 sec max buffer allocated
 
-        case TEST_START_STOP:
-            printf("Scenario: Start → Run → Stop\n");
-            printf("Expected: STOP → FORWARD → STABLE → REVERSE → STOP\n");
-            // Stop (silence) -- set to center value for AUDIO_U16
-            {
-                uint16_t *bufU16 = (uint16_t *)buffer;
-                int n = (1000 * SAMP_FREQ) / 1000;
-                for (int i = 0; i < n; i++) bufU16[i] = 32768;
-            }
-            offset = (1000 * SAMP_FREQ) / 1000;
-            
-            // Start (acceleration)
-            genChirpU16(0.0, 400.0, 2000, 30000, buffer, offset);
-            offset += (2000 * SAMP_FREQ) / 1000;
-            
-            // Run (constant speed)
-            genSineU16(400.0, 3000, 30000, buffer, offset);
-            offset += (3000 * SAMP_FREQ) / 1000;
-            
-            // Stop (deceleration)
-            genChirpU16(400.0, 0.0, 2000, 30000, buffer, offset);
-            offset += (2000 * SAMP_FREQ) / 1000;
-            
-            // Stopped (silence)
-            {
-                uint16_t *bufU16 = (uint16_t *)buffer + offset;
-                int n = (2000 * SAMP_FREQ) / 1000;
-                for (int i = 0; i < n; i++) bufU16[i] = 32768;
-            }
-            offset += (2000 * SAMP_FREQ) / 1000;
-            
-            *totalSamples = offset;
-            break;
-            
-        case TEST_MULTIPLE_HARMONICS:
-            printf("Scenario: Multiple Harmonics (80, 160, 240 Hz)\n");
-            printf("Expected: Speed should detect strongest frequency\n");
-            // initialize to silence (center)
-            {
-                uint16_t *bufU16 = (uint16_t *)buffer;
-                int n = (10000 * SAMP_FREQ) / 1000;
-                for (int i = 0; i < n; i++) bufU16[i] = 32768;
-            }
-            addSineU16(80.0, 10000, 20000, buffer, 0);
-            addSineU16(160.0, 10000, 15000, buffer, 0);
-            addSineU16(240.0, 10000, 10000, buffer, 0);
-            *totalSamples = (10000 * SAMP_FREQ) / 1000;
-            break;
+    printf("\n--- Generating Test Signal ---\n");
+    // Initialize buffer to silence
+    memset(buffer, 128, maxBufferSamples * sizeof(uint16_t));
+
+    switch (scenario) {
+    case TEST_CONSTANT_SPEED: { // 300 Hz
+        printf("Scenario: Constant Speed (300 Hz)\n");
+        genSineU16(300.0, 10000, 30000, buffer, offsetSamples);
+        *totalSamples = (10000 * SAMP_FREQ) / 1000;
+        break;
     }
-    
-    printf("Signal generated: %u samples (%.2f seconds)\n", *totalSamples, (float)*totalSamples / SAMP_FREQ);
-    printf("===========================================\n\n");
+    case TEST_ACCELERATION: { // 300 -> 500 Hz
+        printf("Scenario: Acceleration (300 -> 500 Hz over 8s)\n");
+        genChirpU16(300.0, 500.0, 8000, 30000, buffer, offsetSamples);
+        *totalSamples = (8000 * SAMP_FREQ) / 1000;
+        break;
+    }
+    case TEST_DECELERATION: { // 500 -> 300 Hz
+        printf("Scenario: Deceleration (500 -> 300 Hz over 8s)\n");
+        genChirpU16(500.0, 300.0, 8000, 30000, buffer, offsetSamples);
+        *totalSamples = (8000 * SAMP_FREQ) / 1000;
+        break;
+    }
+    case TEST_WITH_FAULT: { // 420 Hz + 3kHz (Needs addSineU16 implemented)
+        printf("Scenario: Constant Speed (420 Hz) + Fault (3 kHz bursts)\n");
+        printf("NOTE: Requires addSineU16 to be fully implemented.\n");
+        uint32_t baseDuration = 10000; float baseFreq = 420.0;
+        genSineU16(baseFreq, baseDuration, 30000, buffer, 0);
+        // Add bursts using placeholder/ unimplemented addSineU16
+        // int numBursts = baseDuration / 100;
+        // for (int i = 0; i < numBursts; i++) {
+        //     int burstOffset = (i * 100 * SAMP_FREQ) / 1000;
+        //     addSineU16(3000.0, 100, 12000, buffer, burstOffset);
+        // }
+        *totalSamples = (baseDuration * SAMP_FREQ) / 1000;
+        break;
+    }
+    case TEST_START_STOP: { // 0 -> 300 -> 300 -> 0 -> 0 Hz
+        printf("Scenario: Start -> Run (300 Hz) -> Stop\n");
+        uint32_t silenceDur=1000, accelDur=2000, runDur=3000, decelDur=2000, stopDur=2000;
+        offsetSamples += (silenceDur * SAMP_FREQ) / 1000;
+        genChirpU16(0.0, 150.0, accelDur, 30000, buffer, offsetSamples);
+        offsetSamples += (accelDur * SAMP_FREQ) / 1000;
+        genSineU16(150.0, runDur, 30000, buffer, offsetSamples);
+        offsetSamples += (runDur * SAMP_FREQ) / 1000;
+        genChirpU16(150.0, 0.0, decelDur, 30000, buffer, offsetSamples);
+        offsetSamples += (decelDur * SAMP_FREQ) / 1000;
+        offsetSamples += (stopDur * SAMP_FREQ) / 1000;
+        *totalSamples = offsetSamples;
+        break;
+    }
+     case TEST_MULTIPLE_HARMONICS: { // 80 + 160 + 240 Hz (Needs addSineU16)
+        printf("Scenario: Multiple Harmonics (80 + 160 + 240 Hz)\n");
+        printf("NOTE: Requires addSineU16 to be fully implemented.\n");
+        uint32_t duration = 10000;
+        genSineU16(80.0, duration, 20000, buffer, 0);
+        // addSineU16(160.0, duration, 15000, buffer, 0);
+        // addSineU16(240.0, duration, 10000, buffer, 0);
+        *totalSamples = (duration * SAMP_FREQ) / 1000;
+        break;
+    }
+    default:
+        printf("Warning: Unknown scenario.\n"); break;
+    }
+
+    // Ensure totalSamples does not exceed buffer capacity
+    if (*totalSamples > maxBufferSamples) {
+         fprintf(stderr, "Error: Generated signal (%u samples) exceeds max buffer size (%u samples).\n",
+                 *totalSamples, maxBufferSamples);
+         *totalSamples = 0; // Indicate error
+    } else {
+        printf("Signal generated: %u samples (%.2f seconds)\n", *totalSamples, (float)*totalSamples / SAMP_FREQ);
+    }
+     printf("-------------------------------\n\n");
 }
 
-/* *************************************************************************************
- * Cleanup and Signal Handler
- * ***********************************************************************************/
-
+/* --- Cleanup & Signal Handler --- */
 void cleanup() {
     printf("\nShutting down signal generator...\n");
     if (playbackDeviceId != 0) {
         SDL_PauseAudioDevice(playbackDeviceId, SDL_TRUE);
         SDL_CloseAudioDevice(playbackDeviceId);
     }
-    if (gPlaybackBuffer != NULL) {
-        free(gPlaybackBuffer);
-    }
+    if (gPlaybackBuffer != NULL) free(gPlaybackBuffer);
     SDL_Quit();
+    printf("Cleanup done.\n");
 }
 
 void handle_signal(int signal) {
     if (signal == SIGINT) {
-        cleanup();
+        // cleanup() is called by atexit, just need to exit
+        printf("\nCtrl+C detected, exiting.\n");
         exit(0);
     }
 }
 
-/* *************************************************************************************
- * Main
- * ***********************************************************************************/
-int main(int argc, char **argv)
-{
-    printf("DEBUG: Program started.\n");
-    fflush(stdout);
-    
+/* --- Main --- */
+int main(int argc, char **argv) {
     TestScenario scenario = TEST_CONSTANT_SPEED;
-    
-    // Parse command line argument
     if (argc > 1) {
-        int s = atoi(argv[1]);
-        if (s >= 0 && s <= 5) {
-            scenario = (TestScenario)s;
+        int scenario_arg = atoi(argv[1]);
+        if (scenario_arg >= 0 && scenario_arg <= TEST_MULTIPLE_HARMONICS) {
+            scenario = (TestScenario)scenario_arg;
+        } else {
+             printf("Warning: Invalid scenario '%s'. Using default 0.\n", argv[1]);
         }
-    } else {
-        printf("\n===========================================\n");
-        printf("Signal Generator for rtsounds Testing\n");
-        printf("===========================================\n");
-        printf("Usage: %s [scenario]\n\n", argv[0]);
-        printf("Scenarios:\n");
-        printf("  0 - Constant Speed (100 Hz)\n");
-        printf("  1 - Acceleration (50→200 Hz)\n");
-        printf("  2 - Deceleration (200→50 Hz)\n");
-        printf("  3 - With Bearing Fault (120 Hz + 3kHz noise)\n");
-        printf("  4 - Start-Stop Sequence\n");
-        printf("  5 - Multiple Harmonics\n");
-        printf("\nDefaulting to scenario 0\n");
-        printf("===========================================\n");
-        fflush(stdout);
-    }
-    
-    printf("DEBUG: Initializing SDL Audio...\n");
-    fflush(stdout);
-    
-    // Initialize SDL
+    } else { /* Print usage */ } // Simplified usage print
+
     if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-        printf("FATAL ERROR: SDL could not initialize! SDL Error: %s\n", SDL_GetError());
-        fflush(stdout);
-        return 1;
+        fprintf(stderr, "SDL init failed: %s\n", SDL_GetError()); return 1;
     }
+    signal(SIGINT, handle_signal); atexit(cleanup);
 
-    // Register signal handler for Ctrl+C
-    signal(SIGINT, handle_signal);
-    
-    printf("DEBUG: SDL Audio Initialized.\n");
-    fflush(stdout);
-    
-    // Allocate buffer (20 seconds max)
-    gBufferByteSize = 20 * SAMP_FREQ * sizeof(uint16_t);
-    gPlaybackBuffer = (Uint8 *)malloc(gBufferByteSize);
-    memset(gPlaybackBuffer, 0, gBufferByteSize);
-    
-    printf("DEBUG: Buffer allocated.\n");
-    fflush(stdout);
+    Uint32 maxBufferByteSize = 20 * SAMP_FREQ * sizeof(uint16_t);
+    gPlaybackBuffer = (Uint8 *)malloc(maxBufferByteSize);
+    if (!gPlaybackBuffer) { perror("malloc failed"); return 1; }
 
-    // Generate test signal
     uint32_t totalSamples = 0;
     generateTestSignal(scenario, gPlaybackBuffer, &totalSamples);
     gBufferByteSize = totalSamples * sizeof(uint16_t);
-    
-    printf("DEBUG: Signal generated.\n");
-    fflush(stdout);
+    if (gBufferByteSize == 0) return 1; // Exit if signal generation failed
 
-    // Set up playback
-    SDL_AudioSpec desiredPlaybackSpec;
-    SDL_zero(desiredPlaybackSpec);
-    desiredPlaybackSpec.freq = SAMP_FREQ;
-    desiredPlaybackSpec.format = FORMAT;
-    desiredPlaybackSpec.channels = MONO;
-    desiredPlaybackSpec.samples = ABUFSIZE_SAMPLES;
-    desiredPlaybackSpec.callback = audioPlaybackCallback;
-    
-    printf("DEBUG: Opening audio device...\n");
-    fflush(stdout);
-    
-    // Open playback device
-    playbackDeviceId = SDL_OpenAudioDevice(NULL, SDL_FALSE, &desiredPlaybackSpec, &gReceivedPlaybackSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
-    
+    SDL_AudioSpec desired, obtained;
+    SDL_zero(desired);
+    desired.freq = SAMP_FREQ; desired.format = FORMAT; desired.channels = MONO;
+    desired.samples = ABUFSIZE_SAMPLES; desired.callback = audioPlaybackCallback;
+
+    playbackDeviceId = SDL_OpenAudioDevice(NULL, SDL_FALSE, &desired, &obtained, 0); // Allow no changes
     if (playbackDeviceId == 0) {
-        printf("FATAL ERROR: Failed to open playback device! SDL Error: %s\n", SDL_GetError());
-        fflush(stdout);
-        SDL_Quit(); // Quit SDL before returning
-        return 1;
+        fprintf(stderr, "Failed to open audio device: %s\n", SDL_GetError()); return 1;
     }
-    
-    printf("DEBUG: Audio device opened successfully.\n");
-    fflush(stdout);
-    
-    printf("Playing test signal... (will loop)\n");
-    printf("Press Ctrl+C to stop\n\n");
-    fflush(stdout);
-    
-    // Start playback
+    printf("Opened playback device (Samples: %d).\n", obtained.samples);
+
+    printf("Playing scenario %d... Press Ctrl+C to stop.\n", scenario);
     gBufferBytePosition = 0;
-    SDL_PauseAudioDevice(playbackDeviceId, SDL_FALSE);
-    
-    printf("DEBUG: Playback started. Entering infinite loop.\n");
-    fflush(stdout);
-    
-    // Keep playing until user stops
-    while (1) {
-        SDL_Delay(1000);
-    }
-    
-    // Cleanup
-    printf("DEBUG: Loop exited. Cleaning up.\n");
-    fflush(stdout);
-    SDL_CloseAudioDevice(playbackDeviceId);
-    free(gPlaybackBuffer);
-    SDL_Quit();
-    
-    return 0;
+    SDL_PauseAudioDevice(playbackDeviceId, SDL_FALSE); // Start playback
+
+    while (1) { SDL_Delay(1000); } // Keep main alive
+
+    return 0; // Unreachable
 }

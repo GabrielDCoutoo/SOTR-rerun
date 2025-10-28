@@ -97,7 +97,7 @@ void* Speed_thread(void* arg) {
         clock_gettime(CLOCK_MONOTONIC, &start_time);
         // --- END GANTT ---
 
-        printf("DEBUG SPEED: Dados recebidos! A processar...\n"); 
+        //printf("DEBUG SPEED: Dados recebidos! A processar...\n"); 
         
         buffer* readBuffer = cab_getReadBuffer(&cab_buffer); 
 
@@ -131,7 +131,7 @@ void* Speed_thread(void* arg) {
             maxAmplitudeDetected = maxA;
             pthread_mutex_unlock(&updatedVarMutex);
             
-            printf("DEBUG SPEED: Max Freq=%.2f Hz, Max Amp=%.2f (Loop concluído)\n", maxF, maxA);
+            //printf("DEBUG SPEED: Max Freq=%.2f Hz, Max Amp=%.2f (Loop concluído)\n", maxF, maxA);
         }
         
         // --- GANTT: CAPTURE END TIME & LOG ---
@@ -160,7 +160,7 @@ void* Display_thread(void* arg) {
     clock_gettime(CLOCK_MONOTONIC, &next_wakeup); 
 
     int prio = ((struct sched_param*)arg)->sched_priority;
-    printf("Display Thread Running - Prio: %d, Period: 5s\n", prio);
+    //printf("Display Thread Running - Prio: %d, Period: 5s\n", prio);
 
     while (1) {
         next_wakeup = TsAdd(next_wakeup, period);
@@ -315,9 +315,9 @@ void* Issue_thread(void* arg) {
             issueDetected = issueFound;
             pthread_mutex_unlock(&updatedVarMutex);
             
-            printf("DEBUG ISSUE (Prio %d): High Amp=%.2f, Ratio=%.2f (Falha: %s)\n", prio, maxHighFreqAmp, ratio, issueFound ? "SIM" : "NÃO");
+           // printf("DEBUG ISSUE (Prio %d): High Amp=%.2f, Ratio=%.2f (Falha: %s)\n", prio, maxHighFreqAmp, ratio, issueFound ? "SIM" : "NÃO");
         } else {
-            printf("DEBUG ISSUE (Prio %d): Sem buffer disponível, ignorando ciclo.\n", prio);
+            //printf("DEBUG ISSUE (Prio %d): Sem buffer disponível, ignorando ciclo.\n", prio);
         }
         
         // --- GANTT: CAPTURE END TIME & LOG ---
@@ -349,7 +349,7 @@ void* Direction_thread(void* arg) {
     clock_gettime(CLOCK_MONOTONIC, &next_wakeup); 
 
     int prio = ((struct sched_param*)arg)->sched_priority;
-    printf("Direction Thread Running - Prio: %d\n", prio);
+    //printf("Direction Thread Running - Prio: %d\n", prio);
 
     float prevSpeed = 0.0f;
     float prevAmp = 0.0f;
@@ -405,8 +405,8 @@ void* Direction_thread(void* arg) {
                             (newDirection == -1) ? "DECEL" : 
                             (currentSpeed < MIN_SPEED_RUNNING) ? "STOP" : "STABLE";
         
-        printf("DEBUG DIRECTION (Prio %d): Speed=%.1f Hz (Δ=%.1f), State=%s\n",
-               prio, currentSpeed, speedDelta, dirStr);
+       // printf("DEBUG DIRECTION (Prio %d): Speed=%.1f Hz (Δ=%.1f), State=%s\n",
+        //       prio, currentSpeed, speedDelta, dirStr);
 
         // --- GANTT: CAPTURE END TIME & LOG ---
         clock_gettime(CLOCK_MONOTONIC, &end_time);
@@ -437,7 +437,7 @@ void* FFT_thread(void* arg) {
     clock_gettime(CLOCK_MONOTONIC, &next_wakeup);
 
     int prio = ((struct sched_param*)arg)->sched_priority;
-    printf("FFT Spectral Analysis Thread Running - Prio: %d\n", prio);
+   // printf("FFT Spectral Analysis Thread Running - Prio: %d\n", prio);
 
     while (1) {
         next_wakeup = TsAdd(next_wakeup, period);
@@ -450,7 +450,7 @@ void* FFT_thread(void* arg) {
         buffer* readBuffer = cab_getReadBuffer(&cab_buffer);
         
         if (readBuffer != NULL) {
-            printf("DEBUG FFT: Processing buffer %d for spectral analysis\n", readBuffer->index);
+           // printf("DEBUG FFT: Processing buffer %d for spectral analysis\n", readBuffer->index);
 
             for (int k = 0; k < N; k++) {
                 double centered_sample = (double)readBuffer->buf[k] - 32768.0;
@@ -835,7 +835,7 @@ buffer* cab_getWriteBuffer(cab* c) {
 
 buffer* cab_getReadBuffer(cab* c) {
     while (pthread_mutex_trylock(&c->buflist[c->last_write].bufMutex) != 0) {
-        SDL_Delay(10);  // Add a small delay to reduce CPU usage
+        SDL_Delay(10);  
     }
     c->buflist[c->last_write].nusers += 1;
     pthread_mutex_unlock(&c->buflist[c->last_write].bufMutex);
